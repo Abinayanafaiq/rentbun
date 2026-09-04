@@ -48,7 +48,20 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .account-card:hover { transform: translateY(-4px); box-shadow: 7px 7px 0 rgba(213, 243, 74, .1); }
 .gallery-main { box-shadow: 10px 10px 0 rgba(38, 52, 74, .55); }
 .booking-panel { box-shadow: 9px 9px 0 rgba(213, 243, 74, .1); }
+.auth-page { min-height: calc(100vh - 160px); position: relative; }
+.auth-page::before { content: ""; position: absolute; width: 440px; height: 440px; left: -220px; bottom: -180px; border: 1px solid rgba(213,243,74,.15); border-radius: 50%; box-shadow: 0 0 0 28px rgba(213,243,74,.035), 0 0 0 56px rgba(213,243,74,.025); pointer-events: none; }
+.auth-emblem { position: relative; display: inline-grid; place-items: center; width: 72px; height: 72px; border: 1px solid var(--color-accent); transform: rotate(-8deg); }
+.auth-emblem span { font: 800 28px var(--font-archivo), sans-serif; color: var(--color-accent); transform: rotate(8deg); }
+.auth-emblem i { position: absolute; width: 8px; height: 8px; right: -5px; top: -5px; background: var(--color-live); }
+.auth-trust span { display: inline-flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--color-line); color: var(--color-soft); font-size: .75rem; font-weight: 700; }
+.auth-trust b { color: var(--color-accent); font-size: .65rem; }
+.auth-panel { background: rgba(16,24,39,.82); border: 1px solid var(--color-line); padding: 32px; box-shadow: 12px 12px 0 rgba(213,243,74,.09); }
+.auth-input { margin-top: 0; min-height: 52px; border-radius: 2px; background: rgba(9,13,22,.7); }
+.auth-input:focus { box-shadow: 0 0 0 3px rgba(213,243,74,.12); }
+.auth-submit { min-height: 56px; }
+.auth-caption { line-height: 1.5; }
 @media (max-width: 640px) { body { background-size: 32px 32px; } .hero-card { transform: none; box-shadow: 7px 7px 0 rgba(213, 243, 74, .12); } .hero-wrap::before { right: -30%; top: 0; } }
+@media (max-width: 640px) { .auth-page { min-height: auto; padding-top: 28px; } .auth-panel { padding: 24px 20px; box-shadow: 7px 7px 0 rgba(213,243,74,.09); } }
 
 @keyframes marquee {
   to { transform: translateX(-50%); }

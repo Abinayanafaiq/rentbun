@@ -1,40 +1,32 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 import { loginUser } from "@/app/actions";
-import { card, input, span, label, btnPrimary } from "@/components/ui";
+import { input } from "@/components/ui";
 
 export default function UserLoginForm() {
   const [state, formAction, pending] = useActionState(loginUser, null);
 
   return (
-    <form action={formAction} className={`${card} p-6`}>
-      <label className={`${label} mb-4`}>
-        <span className={span}>Email</span>
-        <input name="email" type="email" required autoFocus placeholder="kamu@contoh.com" className={input} />
+    <form action={formAction} className="auth-form">
+      <label className="auth-field block mb-5">
+        <span className="block text-xs font-extrabold tracking-wide text-soft mb-2">Email</span>
+        <input name="email" type="email" required autoFocus placeholder="nama@email.com" className={`${input} auth-input`} />
       </label>
-      <label className={`${label} mb-4`}>
-        <span className={span}>Password</span>
-        <input name="password" type="password" required placeholder="Masukkan password" className={input} />
+      <label className="auth-field block mb-6">
+        <span className="block text-xs font-extrabold tracking-wide text-soft mb-2">Password</span>
+        <input name="password" type="password" required placeholder="Masukkan password" className={`${input} auth-input`} />
       </label>
 
       {state?.error && (
-        <p className="mb-4 text-sm font-semibold text-live bg-livebg border border-live/50 rounded-md px-4 py-2.5">
+          <p className="mb-5 text-sm font-semibold text-live bg-livebg border border-live/50 rounded-sm px-4 py-3">
           {state.error}
         </p>
       )}
 
-      <button type="submit" disabled={pending} className={btnPrimary}>
-        {pending ? "Memeriksa..." : "Masuk"}
+      <button type="submit" disabled={pending} className="auth-submit w-full flex items-center justify-between font-extrabold px-5 py-4 rounded-sm bg-accent text-onaccent hover:bg-accent2 transition-colors disabled:opacity-50">
+        <span>{pending ? "Memeriksa..." : "Masuk ke Rentzo"}</span><span className="text-xl leading-none" aria-hidden="true">→</span>
       </button>
-
-      <p className="text-sm text-center text-soft mt-4">
-        Belum punya akun?{" "}
-        <Link href="/daftar" className="font-bold text-accent hover:text-accent2">
-          Daftar di sini
-        </Link>
-      </p>
     </form>
   );
 }
