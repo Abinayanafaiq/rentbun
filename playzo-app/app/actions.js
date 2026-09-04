@@ -6,6 +6,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { q } from "@/lib/db";
 import { isAdmin, adminToken } from "@/lib/auth";
+import {
+  hashPassword,
+  verifyPassword,
+  setUserSession,
+  clearUserSession,
+  getUserId,
+} from "@/lib/userAuth";
 import { getTransactionDetail } from "@/lib/pakasir";
 import { markOrderPaid } from "@/lib/orders";
 import { uploadPhoto, deletePhoto } from "@/lib/storage";
@@ -33,6 +40,63 @@ export async function logout() {
   redirect("/admin/login");
 }
 
+/* ---------- Auth pengguna (daftar / masuk) ---------- */
+
+export async function registerUser(prev, formData) {
+  const name = String(formData.get("name") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const wa = String(formData.get("wa") || "").trim();
+  const password = String(formData.get("password") || "");
+  const confirm = String(formData.get("confirm") || "");
+
+  if (!name || !email || !password) {
+    return { error: "Nama, email, dan password wajib diisi." };
+  }
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return { error: "Format email tidak valid." };
+  }
+  if (password.length < 6) {
+    return { error: "Password minimal 6 karakter." };
+  }
+  if (password !== confirm) {
+    return { error: "Konfirmasi password tidak cocok." };
+  }
+
+  const { rows: dup } = await q("SELECT id FROM users WHERE email = $1", [email]);
+  if (dup[0]) {
+    return { error: "Email sudah terdaftar. Silakan masuk." };
+  }
+
+  const { rows } = await q(
+    `INSERT INTO users (name, email, wa, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+    [name, email, wa, hashPassword(password)]
+  );
+  await setUserSession(rows[0].id);
+  redirect("/profil");
+}
+
+export async function loginUser(prev, formData) {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+
+  if (!email || !password) {
+    return { error: "Email dan password wajib diisi." };
+  }
+
+  const { rows } = await q("SELECT id, password_hash FROM users WHERE email = $1", [email]);
+  const user = rows[0];
+  if (!user || !verifyPassword(password, user.password_hash)) {
+    return { error: "Email atau password salah." };
+  }
+  await setUserSession(user.id);
+  redirect("/profil");
+}
+
+export async function logoutUser() {
+  await clearUserSession();
+  redirect("/");
+}
+
 async function guard() {
   if (!(await isAdmin())) redirect("/admin/login");
 }
@@ -42,8 +106,8 @@ async function guard() {
 export async function createOrder(prev, formData) {
   const accountId = Number(formData.get("account_id")) || 0;
   const packageId = Number(formData.get("package_id")) || 0;
-  const name = String(formData.get("name") || "").trim();
-  const wa = String(formData.get("wa") || "").trim();
+  let name = String(formData.get("name") || "").trim();
+  let wa = String(formData.get("wa") || "").trim();
 
   if (!name || !wa) {
     return { error: "Nama dan nomor WhatsApp wajib diisi." };
@@ -74,10 +138,11 @@ export async function createOrder(prev, formData) {
 
   const code = "RZ-" + crypto.randomBytes(3).toString("hex").toUpperCase();
 
+  const userId = await getUserId();
   await q(
-    `INSERT INTO orders (code, account_id, account_title, buyer_name, buyer_wa, hours, total, package_label)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [code, accountId, account.title, name, wa, hours, total, packageLabel]
+    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel]
   );
 
   redirect(`/order/${code}`);

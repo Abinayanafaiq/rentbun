@@ -7,7 +7,7 @@ export default function PhotoGallery({ photos, title }) {
 
   return (
     <div>
-      <div className="border-[2.5px] border-ink rounded-[22px] overflow-hidden shadow-hard bg-ink/5">
+      <div className="border border-line rounded-lg overflow-hidden bg-bg">
         <img
           src={photos[active]}
           alt={`${title} — foto ${active + 1}`}
@@ -22,10 +22,10 @@ export default function PhotoGallery({ photos, title }) {
               type="button"
               onClick={() => setActive(i)}
               aria-label={`Lihat foto ${i + 1}`}
-              className={`rounded-xl overflow-hidden border-[2.5px] transition-all ${
+              className={`rounded overflow-hidden border transition-all ${
                 i === active
-                  ? "border-ink ring-3 ring-teal/50"
-                  : "border-ink/30 opacity-60 hover:opacity-100"
+                  ? "border-accent"
+                  : "border-line opacity-60 hover:opacity-100"
               }`}
             >
               <img src={url} alt="" className="w-full aspect-square object-cover" />

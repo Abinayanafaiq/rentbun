@@ -1,26 +1,62 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/userAuth";
 
-export default function SiteHeader() {
+export default async function SiteHeader() {
+  const user = await getCurrentUser();
+
   return (
-    <header className="sticky top-0 z-50 bg-paper border-b-[2.5px] border-ink">
-      <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center gap-7">
-        <Link href="/" className="font-display font-extrabold text-2xl tracking-tight">
-          Rentzo<span className="text-red">!</span>
+    <header className="sticky top-0 z-50 bg-surface border-b border-line">
+      <div className="max-w-6xl mx-auto px-4 h-12 flex items-center gap-6">
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="grid place-items-center w-7 h-7 rounded-md bg-accent text-onaccent font-display font-extrabold text-sm">
+            R
+          </span>
+          <span className="font-display font-extrabold text-lg tracking-tight text-text">
+            Rentzo
+          </span>
         </Link>
-        <nav className="hidden sm:flex gap-6 ml-auto font-semibold text-[0.95rem]">
-          <Link href="/#katalog" className="hover:border-b-[3px] hover:border-red pb-0.5">
+
+        <nav className="hidden sm:flex gap-1 font-semibold text-sm">
+          <Link
+            href="/#katalog"
+            className="px-3 py-2 rounded-md text-soft hover:text-text hover:bg-surface2 transition-colors"
+          >
             Katalog
           </Link>
-          <Link href="/#cara" className="hover:border-b-[3px] hover:border-red pb-0.5">
-            Cara sewa
+          <Link
+            href="/#cara"
+            className="px-3 py-2 rounded-md text-soft hover:text-text hover:bg-surface2 transition-colors"
+          >
+            Cara Sewa
           </Link>
         </nav>
-        <Link
-          href="/#katalog"
-          className="ml-auto sm:ml-0 inline-flex items-center font-bold text-sm px-4 py-2.5 rounded-full border-[2.5px] border-ink bg-reddeep text-paper2 shadow-hard-sm transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
-        >
-          Sewa sekarang
-        </Link>
+
+        <div className="ml-auto flex items-center gap-2">
+          {user ? (
+            <Link
+              href="/profil"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-semibold text-soft hover:text-text hover:bg-surface2 transition-colors"
+            >
+              <span className="grid place-items-center w-6 h-6 rounded-full bg-accent2 text-onaccent font-bold text-xs">
+                {user.name[0]?.toUpperCase()}
+              </span>
+              {user.name.split(" ")[0]}
+            </Link>
+          ) : (
+            <Link
+              href="/masuk"
+              className="px-3 py-1.5 rounded-md text-sm font-semibold text-soft hover:text-text hover:bg-surface2 transition-colors"
+            >
+              Masuk
+            </Link>
+          )}
+          <Link
+            href="/#katalog"
+            className="inline-flex items-center font-bold text-sm px-4 py-1.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
+          >
+            Sewa sekarang
+          </Link>
+        </div>
       </div>
     </header>
   );

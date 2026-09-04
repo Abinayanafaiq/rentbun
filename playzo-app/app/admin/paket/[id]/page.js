@@ -17,10 +17,10 @@ export default async function EditPaket({ params }) {
 
   return (
     <div className="max-w-xl mx-auto px-5 py-12">
-      <Link href="/admin/paket" className="text-sm font-semibold underline underline-offset-4 text-ink/60 hover:text-ink">
+      <Link href="/admin/paket" className="text-sm font-semibold text-soft hover:text-text">
         Kembali ke paket
       </Link>
-      <h1 className="font-display font-extrabold text-[clamp(1.9rem,4vw,2.6rem)] mt-1.5 mb-8">Edit paket</h1>
+      <h1 className="font-display font-extrabold text-[clamp(1.9rem,4vw,2.6rem)] mt-1.5 mb-8 text-text">Edit paket</h1>
       <PackageForm pkg={pkg} />
     </div>
   );

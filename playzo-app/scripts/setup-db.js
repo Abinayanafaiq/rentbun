@@ -35,10 +35,20 @@ CREATE TABLE accounts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  wa TEXT NOT NULL DEFAULT '',
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   code TEXT UNIQUE NOT NULL,
   account_id INT REFERENCES accounts(id) ON DELETE SET NULL,
+  user_id INT REFERENCES users(id) ON DELETE SET NULL,
   account_title TEXT NOT NULL,
   buyer_name TEXT NOT NULL,
   buyer_wa TEXT NOT NULL,
@@ -88,7 +98,7 @@ async function main() {
 
   // 2. Buat schema baru
   await client.query(SCHEMA);
-  console.log("Tabel accounts & orders dibuat.");
+  console.log("Tabel accounts, orders & users dibuat.");
 
   // 3. Seed
   await client.query(SEED);

@@ -1,18 +1,18 @@
-import { Bricolage_Grotesque, Archivo } from "next/font/google";
+import { Inter, Archivo } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-const bricolage = Bricolage_Grotesque({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-bricolage",
-  weight: ["400", "500", "700", "800"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-archivo",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata = {
@@ -23,8 +23,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="id" className={`${bricolage.variable} ${archivo.variable}`}>
-      <body className="font-body bg-paper text-ink antialiased min-h-screen flex flex-col">
+    <html lang="id" className={`${inter.variable} ${archivo.variable}`}>
+      <body className="font-body bg-bg text-text antialiased min-h-screen flex flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

@@ -1,33 +1,32 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #F6EFDA;
-  --color-paper2: #FFFDF6;
-  --color-tint: #EFE4C6;
-  --color-ink: #241C3A;
-  --color-red: #E8442E;
-  --color-reddeep: #D63A24;
-  --color-yellow: #FFC531;
-  --color-teal: #0E9C87;
-  --color-tealdark: #0B5E4E;
-  --color-tealsoft: #DCF2EC;
-  --color-amberdark: #7A5200;
-  --color-ambersoft: #FCEFCB;
-  --color-lilac: #6C5CE7;
+  /* Palet gelap khas Twitch */
+  --color-bg: #0E0E10;
+  --color-surface: #18181B;
+  --color-surface2: #1F1F23;
+  --color-line: #2C2C31;
+  --color-line2: #3A3A40;
+  --color-text: #EFEFF1;
+  --color-soft: #ADADB8;
+  --color-faint: #7C7C85;
 
-  --font-display: var(--font-bricolage), "Archivo", sans-serif;
-  --font-body: var(--font-archivo), system-ui, sans-serif;
+  --color-accent: #9146FF;
+  --color-accent2: #772CE8;
+  --color-onaccent: #FFFFFF;
 
-  --shadow-hard: 6px 6px 0 #241C3A;
-  --shadow-hard-lg: 9px 9px 0 #241C3A;
-  --shadow-hard-sm: 4px 4px 0 #241C3A;
+  --color-live: #EB0400;
+  --color-livebg: #3A0500;
+  --color-ok: #2BA55D;
+  --color-warn: #F0A83B;
+
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
-  background-image: radial-gradient(rgba(36, 28, 58, 0.055) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 @keyframes marquee {
@@ -35,12 +34,7 @@ body {
 }
 .animate-marquee { animation: marquee 32s linear infinite; }
 
-@keyframes spin-slow {
-  to { transform: rotate(360deg); }
-}
-.animate-spin-slow { animation: spin-slow 16s linear infinite; }
-
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .animate-marquee, .animate-spin-slow { animation: none; }
+  .animate-marquee { animation: none; }
 }

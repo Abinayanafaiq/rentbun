@@ -20,13 +20,15 @@ export default function CatalogFilter({ accounts }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2.5 mb-8" role="group" aria-label="Filter rank">
+      <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filter rank">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`font-semibold text-sm px-4 py-2 rounded-full border-2 border-ink transition-all hover:-translate-y-0.5 ${
-              filter === f.key ? "bg-ink text-paper" : "bg-paper2"
+            className={`font-semibold text-sm px-3.5 py-1.5 rounded-full border transition-colors ${
+              filter === f.key
+                ? "border-accent bg-accent/15 text-accent"
+                : "border-line text-soft hover:border-line2 hover:text-text"
             }`}
           >
             {f.label}
@@ -35,9 +37,9 @@ export default function CatalogFilter({ accounts }) {
       </div>
 
       {shown.length === 0 ? (
-        <p className="text-ink/70">Belum ada akun di kategori ini. Coba kategori lain atau chat admin.</p>
+        <p className="text-soft">Belum ada akun di kategori ini. Coba kategori lain atau chat admin.</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {shown.map((a) => (
             <AccountCard key={a.id} account={a} />
           ))}

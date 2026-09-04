@@ -1,23 +1,21 @@
 import { savePackage } from "@/app/actions";
-
-const INPUT =
-  "mt-1.5 w-full border-[2.5px] border-ink rounded-xl px-4 py-3 bg-paper font-medium focus:outline-none focus:ring-3 focus:ring-teal/50";
+import { card, input, span, label, btnPrimary } from "@/components/ui";
 
 export default function PackageForm({ pkg }) {
   const p = pkg || {};
 
   return (
-    <form action={savePackage} className="bg-paper2 border-[2.5px] border-ink rounded-2xl p-6 shadow-hard">
+    <form action={savePackage} className={`${card} p-6`}>
       {p.id && <input type="hidden" name="id" value={p.id} />}
 
-      <label className="block mb-4">
-        <span className="font-semibold text-sm">Nama paket</span>
-        <input name="label" required defaultValue={p.label} placeholder="contoh: 3 Hari" className={INPUT} />
+      <label className={`${label} mb-4`}>
+        <span className={span}>Nama paket</span>
+        <input name="label" required defaultValue={p.label} placeholder="contoh: 3 Hari" className={input} />
       </label>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-6">
-        <label className="block">
-          <span className="font-semibold text-sm">Durasi (jam)</span>
+        <label className={label}>
+          <span className={span}>Durasi (jam)</span>
           <input
             name="duration_hours"
             required
@@ -26,12 +24,12 @@ export default function PackageForm({ pkg }) {
             max="720"
             defaultValue={p.duration_hours}
             placeholder="contoh: 72 untuk 3 hari"
-            className={INPUT}
+            className={input}
           />
-          <span className="text-xs text-ink/60 mt-1 block">1 hari = 24 jam, 1 minggu = 168 jam</span>
+          <span className="text-xs text-soft mt-1 block">1 hari = 24 jam, 1 minggu = 168 jam</span>
         </label>
-        <label className="block">
-          <span className="font-semibold text-sm">Harga paket (Rp)</span>
+        <label className={label}>
+          <span className={span}>Harga paket (Rp)</span>
           <input
             name="price"
             required
@@ -40,15 +38,12 @@ export default function PackageForm({ pkg }) {
             step="1000"
             defaultValue={p.price}
             placeholder="contoh: 150000"
-            className={INPUT}
+            className={input}
           />
         </label>
       </div>
 
-      <button
-        type="submit"
-        className="w-full font-bold px-6 py-4 rounded-full border-[2.5px] border-ink bg-reddeep text-paper2 shadow-hard-sm transition-transform hover:-translate-y-0.5"
-      >
+      <button type="submit" className={btnPrimary}>
         {p.id ? "Simpan perubahan" : "Tambah paket"}
       </button>
     </form>

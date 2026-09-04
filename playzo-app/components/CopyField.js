@@ -16,15 +16,15 @@ export default function CopyField({ label, value }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-paper border-[2.5px] border-ink rounded-xl px-4 py-3">
+    <div className="flex items-center justify-between gap-3 bg-bg border border-line rounded-md px-4 py-3">
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-ink/60">{label}</p>
-        <p className="font-bold truncate">{value}</p>
+        <p className="text-xs font-semibold text-soft">{label}</p>
+        <p className="font-bold text-text truncate">{value}</p>
       </div>
       <button
         type="button"
         onClick={copy}
-        className="shrink-0 text-sm font-bold px-3.5 py-1.5 rounded-full border-2 border-ink bg-yellow hover:-translate-y-0.5 transition-transform"
+        className="shrink-0 text-sm font-bold px-3.5 py-1.5 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
       >
         {copied ? "Tersalin" : "Salin"}
       </button>
