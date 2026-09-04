@@ -20,7 +20,7 @@ function Section({ title, icon, accounts }) {
         <span className="grid place-items-center min-w-7 h-7 px-2 rounded-full bg-surface2 border border-line text-xs font-bold text-soft">{accounts.length}</span>
         <span className="h-px flex-1 bg-line" aria-hidden="true" />
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid sm:grid-cols-2 gap-5 lg:gap-6">
         {accounts.map((a) => (
           <AccountCard key={a.id} account={a} />
         ))}
@@ -75,7 +75,7 @@ export default function CatalogFilter({ accounts }) {
       {shown.length === 0 ? (
         <p className="text-soft">Belum ada akun di kategori ini. Coba kategori lain atau chat admin.</p>
       ) : filter !== "semua" ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 gap-5 lg:gap-6">
           {shown.map((a) => (
             <AccountCard key={a.id} account={a} />
           ))}

@@ -1,23 +1,21 @@
 import Link from "next/link";
 import { rp } from "@/lib/format";
-import RankMark from "./RankMark";
 
 export default function AccountCard({ account }) {
   const ready = account.status === "ready";
 
   return (
-    <article className="account-card group flex flex-col bg-surface rounded-sm overflow-hidden border border-line hover:border-accent/60 transition-colors">
-      {/* Thumbnail ala preview stream */}
+    <article className="account-card rental-card group flex flex-col bg-surface overflow-hidden border border-line hover:border-line2 transition-colors">
       <Link
         href={`/akun/${account.id}`}
-        className="relative block aspect-[16/10] overflow-hidden bg-surface2"
+        className="rental-card-cover relative block aspect-video overflow-hidden bg-surface2"
         aria-label={`Lihat detail ${account.title}`}
       >
         {account.coverUrl ? (
           <img
             src={account.coverUrl}
             alt=""
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.04] ${
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-[1.03] ${
               ready ? "opacity-90 group-hover:opacity-100" : "opacity-50 grayscale"
             }`}
           />
@@ -27,59 +25,57 @@ export default function AccountCard({ account }) {
           </div>
         )}
 
-        {/* Gradien bawah biar teks overlay kebaca */}
-        <span className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-bg/20" aria-hidden="true" />
+        <span className="absolute inset-0 bg-gradient-to-t from-bg/55 via-transparent to-bg/15" aria-hidden="true" />
 
-        {/* Badge LIVE / offline */}
         <span
-          className={`absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[10px] font-extrabold tracking-wide ${
-            ready ? "bg-live text-onaccent" : "bg-bg/80 text-faint"
+          className={`absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
+            ready ? "bg-ok text-onaccent" : "bg-bg/85 text-soft"
           }`}
         >
           {ready && <span className="w-1.5 h-1.5 rounded-full bg-onaccent animate-pulse" aria-hidden="true" />}
-          {ready ? "LIVE" : "OFFLINE"}
+          {ready ? "Tersedia" : "Sedang disewa"}
         </span>
-
-        {/* Harga di overlay */}
-        <span className="absolute bottom-3 left-3 text-xs font-bold text-soft">
+        <span className="absolute top-3 right-3 rounded-full border border-white/15 bg-bg/75 px-2.5 py-1 text-[10px] font-bold text-text backdrop-blur-md">
           {account.rank}
         </span>
-        <span className="absolute top-3 right-3"><RankMark rank={account.rank} compact /></span>
       </Link>
 
-      {/* Info channel */}
-      <div className="flex flex-col p-4 flex-1">
-        <div className="flex flex-col min-w-0 flex-1">
-          <Link
-            href={`/akun/${account.id}`}
-            className="font-display font-extrabold text-lg leading-tight text-text hover:text-accent transition-colors line-clamp-2"
-          >
-            {account.title}
-          </Link>
-          <RankMark rank={account.rank} />
-          <div className="grid grid-cols-2 gap-px mt-4 bg-line border border-line rounded-sm overflow-hidden">
-            <div className="bg-surface2 px-3 py-2.5"><p className="text-[10px] font-bold text-faint">HERO</p><p className="font-display font-extrabold text-base text-text">{account.heroes}</p></div>
-            <div className="bg-surface2 px-3 py-2.5"><p className="text-[10px] font-bold text-faint">SKIN</p><p className="font-display font-extrabold text-base text-text">{account.skins}</p></div>
+      <div className="flex flex-col p-4 sm:p-5 flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Link
+              href={`/akun/${account.id}`}
+              className="font-display font-extrabold text-base leading-snug text-text hover:text-accent transition-colors line-clamp-2"
+            >
+              {account.title}
+            </Link>
+            <p className="mt-1 text-xs text-faint">Rental akun Mobile Legends</p>
           </div>
+          <span className="shrink-0 text-right">
+            <strong className="block font-display text-base text-text">{rp(account.price_per_hour)}</strong>
+            <small className="text-[10px] text-faint">per jam</small>
+          </span>
+        </div>
 
-          <div className="flex items-end justify-between gap-3 mt-auto pt-4">
-            <span className="flex items-baseline gap-1">
-              <span className="font-display font-extrabold text-xl text-text">{rp(account.price_per_hour)}</span>
-              <span className="font-body font-semibold text-xs text-soft">/jam</span>
-            </span>
-            {ready ? (
-              <Link
-                href={`/sewa/${account.id}`}
-                className="font-bold text-sm px-4 py-2 rounded-sm bg-accent text-onaccent hover:bg-accent2 transition-colors"
-              >
-                Pilih akun
-              </Link>
-            ) : (
-              <span className="font-bold text-sm px-4 py-1.5 rounded-md border border-line/60 text-faint cursor-not-allowed">
-                Disewa
-              </span>
-            )}
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-soft">
+            <span className="rental-stat-icon" aria-hidden="true">+</span>
+            <span>{account.heroes} hero</span>
+            <span className="text-line2">/</span>
+            <span>{account.skins} skin</span>
           </div>
+          {ready ? (
+            <Link
+              href={`/sewa/${account.id}`}
+              className="shrink-0 font-bold text-xs px-4 py-2.5 rounded-lg bg-accent text-onaccent hover:bg-accent2 transition-colors"
+            >
+              Sewa
+            </Link>
+          ) : (
+            <span className="shrink-0 font-bold text-xs px-4 py-2.5 rounded-lg bg-surface2 text-faint cursor-not-allowed">
+              Disewa
+            </span>
+          )}
         </div>
       </div>
     </article>
