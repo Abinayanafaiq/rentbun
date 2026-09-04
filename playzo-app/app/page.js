@@ -4,6 +4,7 @@ import { rp } from "@/lib/format";
 import { waLink } from "@/lib/site";
 import { photoUrl } from "@/lib/storage";
 import CatalogFilter from "@/components/CatalogFilter";
+import RentalShowcase from "@/components/RentalShowcase";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,8 @@ export default async function Home() {
           <div className="empty-deck">Katalog akun segera tersedia.</div>
         )}
       </section>
+
+      <RentalShowcase accounts={accounts} />
 
       {/* KATALOG */}
       <section id="katalog" className="catalog-section max-w-6xl mx-auto px-4 py-14 sm:py-20 scroll-mt-20">
