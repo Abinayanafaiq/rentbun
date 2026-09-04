@@ -23,10 +23,10 @@ const STEPS = [
 ];
 
 const PERKS = [
-  { title: "Garansi penuh", desc: "Akun bermasalah atau tidak bisa login? Waktu sewamu diganti utuh." },
-  { title: "Akun milik sendiri", desc: "Semua akun aset resmi Rentzo, bukan akun curian atau hasil phising." },
-  { title: "Fast respon 24 jam", desc: "Admin standby pagi sampai pagi lagi. Rata-rata dibalas di bawah 5 menit." },
-  { title: "Satu akun satu penyewa", desc: "Password diganti setiap sewa selesai. Selama menyewa, akun cuma dipegang kamu." },
+  { metric: "100%", title: "Waktu main tetap utuh", desc: "Tidak bisa login atau akun bermasalah? Durasi yang hilang kami kembalikan penuh." },
+  { metric: "Milik kami", title: "Bukan akun titipan", desc: "Setiap akun dikelola langsung oleh Rentzo. Tidak ada akun curian, phishing, atau sumber yang tidak jelas." },
+  { metric: "<5 menit", title: "Admin benar-benar merespons", desc: "Dukungan tersedia 24 jam dengan rata-rata balasan di bawah lima menit." },
+  { metric: "1 : 1", title: "Tidak berbagi sesi", desc: "Satu akun hanya untuk satu penyewa. Password selalu diganti setelah masa sewa selesai." },
 ];
 
 export default async function Home() {
@@ -171,23 +171,28 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* KENAPA RENTZO */}
-      <section className="max-w-6xl mx-auto px-4 py-16">
-        <div className="mb-9">
-          <p className="eyebrow mb-2">Main dengan tenang</p>
-          <h2 className="section-heading font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Kenapa sewa di Rentzo</h2>
-          <p className="text-soft">Rental akun soalnya percaya-percayaan. Begini cara kami menjaganya.</p>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {PERKS.map((p) => (
-            <div key={p.title} className="bg-surface border border-line rounded-lg p-5">
-              <span className="grid place-items-center w-9 h-9 rounded bg-accent/15 text-accent font-display font-extrabold text-lg mb-3">
-                ✓
-              </span>
-              <h3 className="font-display font-bold text-lg text-text mb-1.5">{p.title}</h3>
-              <p className="text-sm text-soft">{p.desc}</p>
-            </div>
-          ))}
+      {/* Standar layanan */}
+      <section className="service-standard border-b border-line">
+        <div className="max-w-6xl mx-auto px-4 py-16 lg:py-20 grid lg:grid-cols-[.75fr_1.25fr] gap-10 lg:gap-20">
+          <div className="lg:sticky lg:top-24 lg:self-start">
+            <h2 className="section-heading font-display font-extrabold text-[clamp(2.3rem,4vw,4rem)] tracking-[-.045em] leading-[.98] text-text">
+              Bukan cuma janji aman.
+            </h2>
+            <p className="text-soft leading-relaxed max-w-[38ch] mt-5">
+              Ini aturan yang kami jalankan pada setiap akun dan setiap sesi sewa.
+            </p>
+          </div>
+          <div className="service-list border-t border-line">
+            {PERKS.map((p) => (
+              <article key={p.title} className="service-row grid sm:grid-cols-[140px_1fr] gap-3 sm:gap-6 py-6 border-b border-line">
+                <p className="service-metric font-display font-extrabold text-xl text-accent">{p.metric}</p>
+                <div>
+                  <h3 className="font-display font-extrabold text-xl text-text">{p.title}</h3>
+                  <p className="text-sm sm:text-base leading-relaxed text-soft mt-2 max-w-[54ch]">{p.desc}</p>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
