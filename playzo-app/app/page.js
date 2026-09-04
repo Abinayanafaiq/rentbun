@@ -30,18 +30,6 @@ const PERKS = [
 
 const CARD_COLORS = ["#7447f5", "#ff526d", "#30c9f0", "#28d7a5", "#3c68ef"];
 
-function ControllerIcon() {
-  return (
-    <svg viewBox="0 0 58 46" aria-hidden="true">
-      <rect x="3" y="3" width="22" height="40" rx="8" fill="none" stroke="currentColor" strokeWidth="4" />
-      <rect x="33" y="3" width="22" height="40" rx="8" fill="currentColor" />
-      <circle cx="14" cy="15" r="3" fill="currentColor" />
-      <circle cx="44" cy="30" r="3" fill="#0c0c10" />
-      <path d="M25 3v40M33 3v40" stroke="currentColor" strokeWidth="4" />
-    </svg>
-  );
-}
-
 export default async function Home() {
   const raw = await getAccounts();
   const accounts = await Promise.all(
@@ -60,7 +48,6 @@ export default async function Home() {
     <div className="home-page">
       <section className="console-hero" aria-labelledby="hero-title">
         <div className="console-grid" aria-hidden="true" />
-        <div className="hero-console-mark"><ControllerIcon /></div>
         <div className="hero-copy">
           <p className="availability"><span /> {readyCount} akun siap dimainkan</p>
           <h1 id="hero-title">Pilih akun.<br />Langsung main.</h1>

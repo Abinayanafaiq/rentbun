@@ -36,9 +36,8 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .site-header + main { width: 100%; overflow: hidden; background: var(--color-bg); }
 body > footer { width: 100%; overflow: hidden; }
 .home-page { overflow: hidden; }
-.console-hero { position: relative; isolation: isolate; min-height: 720px; padding: 105px 32px 0; overflow: hidden; background: radial-gradient(circle at 50% 72%, rgba(73,62,125,.18), transparent 32%), #09090d; }
+.console-hero { position: relative; isolation: isolate; min-height: 720px; padding: 72px 32px 0; overflow: hidden; background: radial-gradient(circle at 50% 72%, rgba(73,62,125,.18), transparent 32%), #09090d; }
 .console-grid { position: absolute; inset: 0; z-index: -2; opacity: .38; background-image: linear-gradient(rgba(118,118,139,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(118,118,139,.13) 1px, transparent 1px); background-size: 92px 92px; transform: perspective(700px) rotateX(8deg) scale(1.08); mask-image: linear-gradient(to bottom, transparent 3%, black 35%, black 85%, transparent); }
-.hero-console-mark { position: absolute; top: 34px; left: 50%; width: 52px; color: white; transform: translateX(-50%); }
 .hero-copy { position: relative; z-index: 3; text-align: center; margin: 0 auto; }
 .availability { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 18px; color: #c8c8cf; font-size: .78rem; font-weight: 700; }
 .availability span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 0 5px rgba(240,232,58,.1); }
@@ -155,8 +154,7 @@ button, a { touch-action: manipulation; }
   .auth-page::before { width: 280px; height: 280px; left: -170px; bottom: -100px; }
 }
 @media (max-width: 760px) {
-  .console-hero { min-height: 650px; padding: 92px 18px 0; }
-  .hero-console-mark { top: 25px; width: 44px; }
+  .console-hero { min-height: 650px; padding: 62px 18px 0; }
   .hero-copy h1 { font-size: clamp(2.8rem, 15vw, 4.6rem); }
   .hero-summary { max-width: 36ch; line-height: 1.55; }
   .hero-actions { margin-top: 20px; }
