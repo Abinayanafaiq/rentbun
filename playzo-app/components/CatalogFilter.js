@@ -47,14 +47,14 @@ export default function CatalogFilter({ accounts }) {
 
   return (
     <div>
-      <div className="catalog-toolbar flex flex-col sm:flex-row sm:items-center gap-4 mb-10 p-3 sm:p-4 bg-surface border border-line rounded-sm">
+      <div className="catalog-toolbar flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-8 sm:mb-10 p-3 sm:p-4 bg-surface border border-line rounded-sm">
         <p className="shrink-0 px-1 font-display font-bold text-sm text-text">Filter rank</p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter rank">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mb-1" role="group" aria-label="Filter rank">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`inline-flex items-center gap-2 font-bold text-sm px-4 py-2 rounded-sm border transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 font-bold text-sm px-4 py-2.5 rounded-sm border transition-colors ${
               filter === f.key
                 ? "border-accent bg-accent text-onaccent"
                 : "border-line bg-bg/40 text-soft hover:border-line2 hover:text-text"

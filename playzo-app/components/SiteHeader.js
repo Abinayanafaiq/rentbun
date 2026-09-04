@@ -6,7 +6,7 @@ export default async function SiteHeader() {
 
   return (
     <header className="site-header sticky top-0 z-50 border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-7">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center gap-3 sm:gap-7">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="brand-mark grid place-items-center w-8 h-8 rounded-md bg-accent text-onaccent font-display font-extrabold text-sm">
             R
@@ -40,7 +40,7 @@ export default async function SiteHeader() {
               <span className="grid place-items-center w-6 h-6 rounded-full bg-accent2 text-onaccent font-bold text-xs">
                 {user.name[0]?.toUpperCase()}
               </span>
-              {user.name.split(" ")[0]}
+              <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
             </Link>
           ) : (
             <Link
@@ -54,7 +54,7 @@ export default async function SiteHeader() {
             href="/#katalog"
             className="inline-flex items-center font-bold text-sm px-4 py-1.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
           >
-            Sewa sekarang
+              <span className="sm:hidden">Sewa</span><span className="hidden sm:inline">Sewa sekarang</span>
           </Link>
         </div>
       </div>

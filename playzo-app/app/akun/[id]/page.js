@@ -26,8 +26,8 @@ export default async function AkunDetail({ params }) {
   ];
 
   return (
-    <div className="account-detail max-w-6xl mx-auto px-4 pt-8 pb-20">
-      <nav className="flex items-center gap-2 text-sm mb-8" aria-label="Breadcrumb">
+    <div className="account-detail max-w-6xl mx-auto px-3 sm:px-4 pt-5 sm:pt-8 pb-24 lg:pb-20">
+      <nav className="flex items-center gap-2 text-xs sm:text-sm mb-6 sm:mb-8 min-w-0" aria-label="Breadcrumb">
         <Link href="/" className="font-semibold text-faint hover:text-accent">Beranda</Link>
         <span className="text-line2">/</span>
         <Link href="/#katalog" className="font-semibold text-faint hover:text-accent">Katalog</Link>
@@ -35,7 +35,7 @@ export default async function AkunDetail({ params }) {
         <span className="font-semibold text-soft line-clamp-1">{account.title}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-[1.25fr_.75fr] gap-8 lg:gap-12 items-start">
+      <div className="grid lg:grid-cols-[1.25fr_.75fr] gap-9 lg:gap-12 items-start">
         <div>
           {photos.length > 0 ? (
             <PhotoGallery photos={photos} title={account.title} />
@@ -45,7 +45,7 @@ export default async function AkunDetail({ params }) {
             </div>
           )}
 
-          <div className="mt-8 border-t border-line pt-7">
+          <div className="mt-7 sm:mt-8 border-t border-line pt-6 sm:pt-7">
             <p className="eyebrow mb-3">Tentang akun</p>
             <h2 className="font-display font-extrabold text-2xl text-text mb-3">Yang kamu dapatkan</h2>
             <p className="text-soft leading-relaxed max-w-[68ch]">{account.description || "Informasi lengkap akun telah diverifikasi oleh admin sebelum ditampilkan di katalog."}</p>
@@ -58,18 +58,18 @@ export default async function AkunDetail({ params }) {
         </div>
 
         <aside className="lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-4 mb-5">
+          <div className="flex items-center justify-between gap-3 mb-4 sm:mb-5">
             <p className="eyebrow">Account dossier</p>
             <StatusBadge status={account.status} />
           </div>
-          <h1 className="section-heading font-display font-extrabold text-[clamp(2.2rem,5vw,3.8rem)] tracking-[-.04em] leading-[.98] text-text">
+          <h1 className="section-heading font-display font-extrabold text-[clamp(2.2rem,11vw,3.8rem)] tracking-[-.04em] leading-[.98] text-text">
               {account.title}
           </h1>
           <div className="mt-5"><RankMark rank={account.rank} /></div>
 
-          <div className="grid grid-cols-2 gap-px mt-8 bg-line border border-line rounded-sm overflow-hidden">
+          <div className="grid grid-cols-2 gap-px mt-7 sm:mt-8 bg-line border border-line rounded-sm overflow-hidden">
             {specs.map((s) => (
-              <div key={s.label} className="relative bg-surface p-4 sm:p-5 min-h-28">
+              <div key={s.label} className="relative bg-surface p-3.5 sm:p-5 min-h-24 sm:min-h-28">
                 <p className="text-[10px] font-extrabold tracking-[.12em] text-accent">{s.code}</p>
                 <p className="font-display font-extrabold text-2xl sm:text-3xl mt-2 text-text line-clamp-1">{s.value}</p>
                 <p className="text-xs text-faint mt-1">{s.label}</p>
