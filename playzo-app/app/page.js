@@ -4,8 +4,6 @@ import { rp } from "@/lib/format";
 import { waLink } from "@/lib/site";
 import { photoUrl } from "@/lib/storage";
 import CatalogFilter from "@/components/CatalogFilter";
-import StatusBadge from "@/components/StatusBadge";
-import RankMark from "@/components/RankMark";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +27,20 @@ const PERKS = [
   { metric: "1 : 1", title: "Tidak berbagi sesi", desc: "Satu akun hanya untuk satu penyewa. Password selalu diganti setelah masa sewa selesai." },
 ];
 
+const CARD_COLORS = ["#7447f5", "#ff526d", "#30c9f0", "#28d7a5", "#3c68ef"];
+
+function ControllerIcon() {
+  return (
+    <svg viewBox="0 0 58 46" aria-hidden="true">
+      <rect x="3" y="3" width="22" height="40" rx="8" fill="none" stroke="currentColor" strokeWidth="4" />
+      <rect x="33" y="3" width="22" height="40" rx="8" fill="currentColor" />
+      <circle cx="14" cy="15" r="3" fill="currentColor" />
+      <circle cx="44" cy="30" r="3" fill="#0c0c10" />
+      <path d="M25 3v40M33 3v40" stroke="currentColor" strokeWidth="4" />
+    </svg>
+  );
+}
+
 export default async function Home() {
   const raw = await getAccounts();
   const accounts = await Promise.all(
@@ -37,103 +49,61 @@ export default async function Home() {
       coverUrl: a.photos?.[0] ? await photoUrl(a.photos[0]) : null,
     }))
   );
-  const featured = accounts.find((a) => a.status === "ready") || accounts[0];
   const readyCount = accounts.filter((a) => a.status === "ready").length;
+  const heroAccounts = [
+    ...accounts.filter((a) => a.status === "ready"),
+    ...accounts.filter((a) => a.status !== "ready"),
+  ].slice(0, 5);
 
   return (
-    <div>
-      {/* HERO — featured "live now" */}
-      <section className="hero-wrap max-w-6xl mx-auto px-4 pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-14 items-center">
-        <div>
-          <p className="hero-kicker inline-flex items-center gap-2 text-sm font-bold mb-5">
-            <span className="w-2 h-2 rounded-full bg-live animate-pulse" aria-hidden="true" />
-            {readyCount} akun LIVE sekarang
-          </p>
-          <h1 className="hero-title font-display font-extrabold leading-[.96] tracking-[-.05em] text-[clamp(2.8rem,13vw,6.4rem)] text-text mb-5 sm:mb-6">
-            Main lebih jauh<span className="text-accent">.</span>
-          </h1>
-          <p className="text-base sm:text-lg text-soft max-w-[46ch] mb-7 sm:mb-8 leading-relaxed">
-            Sewa akun Mobile Legends dengan rank tinggi dan skin melimpah mulai Rp1.500 per jam. Pilih akun, transfer, langsung main.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link
-              href="#katalog"
-              className="inline-flex justify-center font-bold px-6 py-3.5 sm:py-3 rounded-sm bg-accent text-onaccent hover:bg-accent2 transition-colors"
-            >
-              Lihat katalog
-            </Link>
-            <Link
-              href="#cara"
-              className="inline-flex justify-center font-bold px-6 py-3.5 sm:py-3 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
-            >
-              Cara Sewa
-            </Link>
+    <div className="home-page">
+      <section className="console-hero" aria-labelledby="hero-title">
+        <div className="console-grid" aria-hidden="true" />
+        <div className="hero-console-mark"><ControllerIcon /></div>
+        <div className="hero-copy">
+          <p className="availability"><span /> {readyCount} akun siap dimainkan</p>
+          <h1 id="hero-title">Pilih akun.<br />Langsung main.</h1>
+          <p className="hero-summary">Sewa akun Mobile Legends rank tinggi dan full skin. Proses cepat, akun aman, waktu main tidak dibagi.</p>
+          <div className="hero-actions">
+            <Link href="#katalog">Lihat semua akun</Link>
+            <Link href="#cara">Cara menyewa</Link>
           </div>
         </div>
 
-        {/* Featured stream card */}
-        {featured && (
-          <Link
-            href={`/akun/${featured.id}`}
-            className="hero-card group block bg-surface border border-line rounded-sm overflow-hidden hover:border-accent transition-all duration-300"
-          >
-            <div className="relative aspect-video bg-surface2">
-              {featured.coverUrl ? (
-                <img
-                  src={featured.coverUrl}
-                  alt={featured.title}
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-accent2/60 to-bg">
-                  <span className="font-display font-extrabold text-4xl text-text">ML</span>
-                </div>
-              )}
-              <span className="absolute top-3 left-3">
-                <StatusBadge status={featured.status} />
-              </span>
-              <span className="absolute bottom-3 right-3 rounded bg-bg/85 px-2.5 py-1 text-sm font-bold text-text backdrop-blur-sm">
-                {rp(featured.price_per_hour)}
-                <span className="font-body font-semibold text-xs text-soft">/jam</span>
-              </span>
-            </div>
-             <div className="flex items-center gap-3 p-3 sm:p-3.5">
-               <RankMark rank={featured.rank} compact />
-              <div className="min-w-0">
-                <p className="font-display font-bold text-text leading-snug line-clamp-1">{featured.title}</p>
-                <p className="text-xs text-soft">
-                  {featured.rank} · {featured.heroes} hero · {featured.skins} skin
-                </p>
-              </div>
-            </div>
-          </Link>
+        {heroAccounts.length > 0 ? (
+          <div className={`game-deck game-deck-${heroAccounts.length}`}>
+            {heroAccounts.map((account, index) => (
+              <Link
+                href={`/akun/${account.id}`}
+                key={account.id}
+                className={`game-tile tile-${index + 1}`}
+                style={{ "--tile-color": CARD_COLORS[index] }}
+              >
+                <span className="tile-topline">
+                  <span>{account.rank || "Mobile Legends"}</span>
+                  <b>{account.status === "ready" ? "Siap" : "Disewa"}</b>
+                </span>
+                <strong>{account.title}</strong>
+                <small>{account.heroes} hero / {account.skins} skin</small>
+                {account.coverUrl ? (
+                  <img src={account.coverUrl} alt="" />
+                ) : (
+                  <span className="tile-placeholder">ML</span>
+                )}
+                <span className="tile-price">{rp(account.price_per_hour)}<small>/jam</small></span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-deck">Katalog akun segera tersedia.</div>
         )}
       </section>
 
-      {/* LIVE ticker */}
-      <div className="border-y border-line bg-surface/90 overflow-hidden">
-        <div className="flex w-max animate-marquee">
-          {[0, 1].map((g) => (
-            <div key={g} className="flex flex-none items-center py-2.5" aria-hidden={g === 1}>
-              {accounts.map((a) => (
-                <span key={`${g}-${a.id}`} className="flex items-center">
-                  <span className="text-soft font-semibold px-5 text-sm whitespace-nowrap">
-                    <span className={`mr-2 inline-block w-1.5 h-1.5 rounded-full align-middle ${a.status === "ready" ? "bg-live" : "bg-faint"}`} />
-                    {a.title} · {rp(a.price_per_hour)}/jam
-                  </span>
-                  <span className="text-accent text-xs">◆</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* KATALOG */}
-      <section id="katalog" className="max-w-6xl mx-auto px-4 py-11 sm:py-14 scroll-mt-16">
+      <section id="katalog" className="catalog-section max-w-6xl mx-auto px-4 py-14 sm:py-20 scroll-mt-20">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7 sm:mb-8">
           <div>
-            <p className="eyebrow mb-2">Pilih loadout-mu</p>
+            <p className="eyebrow mb-2">Koleksi Rentzo</p>
             <h2 className="section-heading font-display font-extrabold text-[clamp(1.8rem,8vw,2.6rem)] text-text mb-2">
               Katalog akun
             </h2>
@@ -153,7 +123,7 @@ export default async function Home() {
       <section id="cara" className="py-12 sm:py-16 bg-surface/80 border-y border-line scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-9">
-            <p className="eyebrow mb-2">Tidak pakai drama</p>
+             <p className="eyebrow mb-2">Mulai bermain</p>
             <h2 className="font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Cara Sewa</h2>
             <p className="text-soft">Tiga langkah, biasanya selesai kurang dari lima menit.</p>
           </div>
