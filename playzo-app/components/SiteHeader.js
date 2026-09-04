@@ -1,19 +1,17 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/userAuth";
+import { photoUrl } from "@/lib/storage";
 
 export default async function SiteHeader() {
   const user = await getCurrentUser();
+  const logoUrl = await photoUrl("branding/rentzo-logo.png");
 
   return (
     <header className="site-header sticky top-0 z-50">
       <div className="max-w-[1320px] mx-auto px-4 sm:px-8 h-16 sm:h-20 flex items-center gap-3 sm:gap-7">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="brand-mark grid place-items-center w-8 h-8 rounded-lg bg-text text-bg font-display font-extrabold text-sm">
-            RZ
-          </span>
-          <span className="font-display font-extrabold text-lg tracking-tight text-text">
-            rentzo
-          </span>
+          <img src={logoUrl} alt="Rentzo" className="brand-logo" />
+          <span className="sr-only">Rentzo</span>
         </Link>
 
         <nav className="hidden sm:flex gap-1 font-semibold text-sm">
