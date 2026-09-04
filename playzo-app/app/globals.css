@@ -26,15 +26,15 @@
 body {
   background-color: #606069;
   color: var(--color-text);
-  padding: clamp(0px, 4vw, 58px);
+  padding: 0;
 }
 
 ::selection { background: var(--color-accent); color: var(--color-onaccent); }
 a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
-.site-header { width: 100%; max-width: 1440px; margin: 0 auto; background: rgba(9, 9, 13, .9); backdrop-filter: blur(18px); border-radius: 42px 42px 0 0; }
+.site-header { width: 100%; background: rgba(9, 9, 13, .9); backdrop-filter: blur(18px); }
 .brand-mark { letter-spacing: -.08em; }
-.site-header + main { width: 100%; max-width: 1440px; margin: 0 auto; overflow: hidden; background: var(--color-bg); }
-body > footer { width: 100%; max-width: 1440px; margin-inline: auto; border-radius: 0 0 42px 42px; overflow: hidden; }
+.site-header + main { width: 100%; overflow: hidden; background: var(--color-bg); }
+body > footer { width: 100%; overflow: hidden; }
 .home-page { overflow: hidden; }
 .console-hero { position: relative; isolation: isolate; min-height: 720px; padding: 105px 32px 0; overflow: hidden; background: radial-gradient(circle at 50% 72%, rgba(73,62,125,.18), transparent 32%), #09090d; }
 .console-grid { position: absolute; inset: 0; z-index: -2; opacity: .38; background-image: linear-gradient(rgba(118,118,139,.13) 1px, transparent 1px), linear-gradient(90deg, rgba(118,118,139,.13) 1px, transparent 1px); background-size: 92px 92px; transform: perspective(700px) rotateX(8deg) scale(1.08); mask-image: linear-gradient(to bottom, transparent 3%, black 35%, black 85%, transparent); }
@@ -123,8 +123,6 @@ button, a { touch-action: manipulation; }
   .auth-page::before { width: 280px; height: 280px; left: -170px; bottom: -100px; }
 }
 @media (max-width: 760px) {
-  body { padding: 0; }
-  .site-header, body > footer { border-radius: 0; }
   .console-hero { min-height: 650px; padding: 92px 18px 0; }
   .hero-console-mark { top: 25px; width: 44px; }
   .hero-copy h1 { font-size: clamp(2.8rem, 15vw, 4.6rem); }
