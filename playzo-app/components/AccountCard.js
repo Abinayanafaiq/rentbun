@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { rp } from "@/lib/format";
+import RankMark from "./RankMark";
 
 export default function AccountCard({ account }) {
   const ready = account.status === "ready";
@@ -43,9 +44,7 @@ export default function AccountCard({ account }) {
         <span className="absolute bottom-3 left-3 text-xs font-bold text-soft">
           {account.rank}
         </span>
-        <span className="absolute top-3 right-3 grid place-items-center w-9 h-9 rounded-sm bg-accent text-onaccent font-display font-extrabold text-sm shadow-lg">
-          {account.rank[0]?.toUpperCase()}
-        </span>
+        <span className="absolute top-3 right-3"><RankMark rank={account.rank} compact /></span>
       </Link>
 
       {/* Info channel */}
@@ -57,6 +56,7 @@ export default function AccountCard({ account }) {
           >
             {account.title}
           </Link>
+          <RankMark rank={account.rank} />
           <div className="grid grid-cols-2 gap-px mt-4 bg-line border border-line rounded-sm overflow-hidden">
             <div className="bg-surface2 px-3 py-2.5"><p className="text-[10px] font-bold text-faint">HERO</p><p className="font-display font-extrabold text-base text-text">{account.heroes}</p></div>
             <div className="bg-surface2 px-3 py-2.5"><p className="text-[10px] font-bold text-faint">SKIN</p><p className="font-display font-extrabold text-base text-text">{account.skins}</p></div>

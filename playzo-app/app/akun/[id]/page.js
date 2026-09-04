@@ -5,6 +5,7 @@ import { rp } from "@/lib/format";
 import { photoUrls } from "@/lib/storage";
 import StatusBadge from "@/components/StatusBadge";
 import PhotoGallery from "@/components/PhotoGallery";
+import RankMark from "@/components/RankMark";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,7 @@ export default async function AkunDetail({ params }) {
           <h1 className="section-heading font-display font-extrabold text-[clamp(2.2rem,5vw,3.8rem)] tracking-[-.04em] leading-[.98] text-text">
               {account.title}
           </h1>
+          <div className="mt-5"><RankMark rank={account.rank} /></div>
 
           <div className="grid grid-cols-2 gap-px mt-8 bg-line border border-line rounded-sm overflow-hidden">
             {specs.map((s) => (

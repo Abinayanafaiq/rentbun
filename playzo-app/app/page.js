@@ -5,6 +5,7 @@ import { waLink } from "@/lib/site";
 import { photoUrl } from "@/lib/storage";
 import CatalogFilter from "@/components/CatalogFilter";
 import StatusBadge from "@/components/StatusBadge";
+import RankMark from "@/components/RankMark";
 
 export const dynamic = "force-dynamic";
 
@@ -97,9 +98,7 @@ export default async function Home() {
               </span>
             </div>
             <div className="flex items-center gap-3 p-3.5">
-              <span className="grid place-items-center w-10 h-10 flex-none rounded-md bg-accent2 text-onaccent font-display font-extrabold text-sm">
-                {featured.rank[0]?.toUpperCase()}
-              </span>
+               <RankMark rank={featured.rank} compact />
               <div className="min-w-0">
                 <p className="font-display font-bold text-text leading-snug line-clamp-1">{featured.title}</p>
                 <p className="text-xs text-soft">

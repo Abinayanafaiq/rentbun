@@ -48,6 +48,17 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .account-card:hover { transform: translateY(-4px); box-shadow: 7px 7px 0 rgba(213, 243, 74, .1); }
 .gallery-main { box-shadow: 10px 10px 0 rgba(38, 52, 74, .55); }
 .booking-panel { box-shadow: 9px 9px 0 rgba(213, 243, 74, .1); }
+.rank-mark { display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; }
+.rank-mark-gem { position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex: none; clip-path: polygon(50% 0, 88% 24%, 88% 74%, 50% 100%, 12% 74%, 12% 24%); background: currentColor; }
+.rank-mark-gem::after { content: ""; position: absolute; inset: 3px; clip-path: inherit; background: var(--color-bg); }
+.rank-mark-gem span { position: relative; z-index: 1; font: 800 9px var(--font-archivo), sans-serif; }
+.rank-mark-copy { display: flex; flex-direction: column; line-height: 1.1; }
+.rank-mark-copy strong { font: 800 .75rem var(--font-archivo), sans-serif; color: var(--color-text); }
+.rank-mark-copy small { margin-top: 4px; color: var(--color-faint); font-size: .62rem; font-weight: 700; }
+.rank-mark-compact { margin-top: 0; }
+.rank-mark-compact .rank-mark-gem { width: 42px; height: 42px; filter: drop-shadow(3px 3px 0 rgba(9,13,22,.4)); }
+.rank-immortal { color: #e8b4ff; }.rank-glory { color: #ff866e; }.rank-honor { color: #54d7c0; }.rank-mythic { color: #f4c95d; }.rank-legend { color: #68d28d; }.rank-epic { color: #a493ff; }
+.rank-immortal .rank-mark-gem::after { background: #1e1730; }.rank-glory .rank-mark-gem::after { background: #321a25; }.rank-honor .rank-mark-gem::after { background: #102b31; }.rank-mythic .rank-mark-gem::after { background: #332815; }.rank-legend .rank-mark-gem::after { background: #132c22; }.rank-epic .rank-mark-gem::after { background: #201c3b; }
 .auth-page { min-height: calc(100vh - 160px); position: relative; }
 .auth-page::before { content: ""; position: absolute; width: 440px; height: 440px; left: -220px; bottom: -180px; border: 1px solid rgba(213,243,74,.15); border-radius: 50%; box-shadow: 0 0 0 28px rgba(213,243,74,.035), 0 0 0 56px rgba(213,243,74,.025); pointer-events: none; }
 .auth-emblem { position: relative; display: inline-grid; place-items: center; width: 72px; height: 72px; border: 1px solid var(--color-accent); transform: rotate(-8deg); }
