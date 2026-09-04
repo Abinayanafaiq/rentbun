@@ -3,7 +3,7 @@ import { WA_DISPLAY } from "@/lib/site";
 
 export default function SiteFooter() {
   return (
-    <footer className="bg-surface border-t border-line mt-0">
+    <footer className="bg-surface/80 border-t border-line mt-0">
       <div className="max-w-6xl mx-auto px-4 pt-10 pb-8">
         <div className="flex flex-wrap justify-between gap-8 pb-8">
           <div>
@@ -11,7 +11,7 @@ export default function SiteFooter() {
               <span className="grid place-items-center w-7 h-7 rounded-md bg-accent text-onaccent font-display font-extrabold text-sm">
                 R
               </span>
-              <span className="font-display font-extrabold text-lg text-text">Rentzo</span>
+              <span className="font-display font-extrabold text-lg text-text">rentzo<span className="text-accent">.</span></span>
             </div>
             <p className="mt-2.5 text-soft max-w-[32ch] text-sm">
               Rental akun Mobile Legends online. Buka 24 jam, setiap hari.

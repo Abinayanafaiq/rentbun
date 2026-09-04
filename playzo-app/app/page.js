@@ -42,14 +42,14 @@ export default async function Home() {
   return (
     <div>
       {/* HERO — featured "live now" */}
-      <section className="max-w-6xl mx-auto px-4 py-12 grid lg:grid-cols-[1.15fr_1fr] gap-10 items-center">
+      <section className="hero-wrap max-w-6xl mx-auto px-4 pt-20 pb-16 grid lg:grid-cols-[1.05fr_1fr] gap-14 items-center">
         <div>
-          <p className="inline-flex items-center gap-2 text-sm font-semibold text-soft mb-4">
+          <p className="hero-kicker inline-flex items-center gap-2 text-sm font-bold mb-5">
             <span className="w-2 h-2 rounded-full bg-live animate-pulse" aria-hidden="true" />
             {readyCount} akun LIVE sekarang
           </p>
-          <h1 className="font-display font-extrabold leading-[1.05] tracking-tight text-[clamp(2.4rem,5vw,4rem)] text-text mb-5">
-            Akun sultan, harga rental.
+          <h1 className="hero-title font-display font-extrabold leading-[.96] tracking-[-.05em] text-[clamp(3.2rem,7vw,6.4rem)] text-text mb-6">
+            Main lebih jauh<span className="text-accent">.</span>
           </h1>
           <p className="text-lg text-soft max-w-[46ch] mb-8">
             Sewa akun Mobile Legends dengan rank tinggi dan skin melimpah mulai Rp1.500 per jam. Pilih akun, transfer, langsung main.
@@ -57,7 +57,7 @@ export default async function Home() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="#katalog"
-              className="inline-flex font-bold px-6 py-3 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
+              className="inline-flex font-bold px-6 py-3 rounded-sm bg-accent text-onaccent hover:bg-accent2 transition-colors"
             >
               Lihat katalog
             </Link>
@@ -74,7 +74,7 @@ export default async function Home() {
         {featured && (
           <Link
             href={`/akun/${featured.id}`}
-            className="group block bg-surface border border-line rounded-lg overflow-hidden hover:border-line2 transition-colors"
+            className="hero-card group block bg-surface border border-line rounded-sm overflow-hidden hover:border-accent transition-all duration-300"
           >
             <div className="relative aspect-video bg-surface2">
               {featured.coverUrl ? (
@@ -112,7 +112,7 @@ export default async function Home() {
       </section>
 
       {/* LIVE ticker */}
-      <div className="border-y border-line bg-surface overflow-hidden">
+      <div className="border-y border-line bg-surface/90 overflow-hidden">
         <div className="flex w-max animate-marquee">
           {[0, 1].map((g) => (
             <div key={g} className="flex flex-none items-center py-2.5" aria-hidden={g === 1}>
@@ -132,19 +132,29 @@ export default async function Home() {
 
       {/* KATALOG */}
       <section id="katalog" className="max-w-6xl mx-auto px-4 py-14 scroll-mt-16">
-        <div className="mb-8">
-          <h2 className="font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Kanal yang LIVE</h2>
-          <p className="text-soft max-w-[58ch]">
-            Setiap akun dicek admin sebelum disewakan. Email dan password akun baru terlihat setelah pembayaranmu terkonfirmasi.
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+          <div>
+            <p className="eyebrow mb-2">Pilih loadout-mu</p>
+            <h2 className="section-heading font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">
+              Katalog akun
+            </h2>
+            <p className="text-soft max-w-[58ch]">
+              Setiap akun dicek admin sebelum disewakan. Email dan password akun baru terlihat setelah pembayaranmu terkonfirmasi.
+            </p>
+          </div>
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-soft">
+            <span className="w-2 h-2 rounded-full bg-live animate-pulse" aria-hidden="true" />
+            {readyCount} LIVE sekarang
           </p>
         </div>
         <CatalogFilter accounts={accounts} />
       </section>
 
       {/* CARA SEWA */}
-      <section id="cara" className="py-14 bg-surface border-y border-line scroll-mt-16">
+      <section id="cara" className="py-16 bg-surface/80 border-y border-line scroll-mt-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="mb-9">
+            <p className="eyebrow mb-2">Tidak pakai drama</p>
             <h2 className="font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Cara Sewa</h2>
             <p className="text-soft">Tiga langkah, biasanya selesai kurang dari lima menit.</p>
           </div>
@@ -163,9 +173,10 @@ export default async function Home() {
       </section>
 
       {/* KENAPA RENTZO */}
-      <section className="max-w-6xl mx-auto px-4 py-14">
+      <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="mb-9">
-          <h2 className="font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Kenapa sewa di Rentzo</h2>
+          <p className="eyebrow mb-2">Main dengan tenang</p>
+          <h2 className="section-heading font-display font-extrabold text-[clamp(1.8rem,3.5vw,2.6rem)] text-text mb-2">Kenapa sewa di Rentzo</h2>
           <p className="text-soft">Rental akun soalnya percaya-percayaan. Begini cara kami menjaganya.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -183,7 +194,7 @@ export default async function Home() {
 
       {/* CTA */}
       <section className="max-w-6xl mx-auto px-4 pb-14">
-        <div className="bg-accent rounded-lg px-7 py-14 text-center">
+        <div className="accent-panel rounded-sm px-7 py-14 text-center">
           <h2 className="font-display font-extrabold text-[clamp(1.8rem,4vw,2.8rem)] text-onaccent mb-3">
             Mau main hari ini?
           </h2>

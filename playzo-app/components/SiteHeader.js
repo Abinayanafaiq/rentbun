@@ -5,14 +5,14 @@ export default async function SiteHeader() {
   const user = await getCurrentUser();
 
   return (
-    <header className="sticky top-0 z-50 bg-surface border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 h-12 flex items-center gap-6">
+    <header className="site-header sticky top-0 z-50 border-b border-line">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-7">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid place-items-center w-7 h-7 rounded-md bg-accent text-onaccent font-display font-extrabold text-sm">
+          <span className="brand-mark grid place-items-center w-8 h-8 rounded-md bg-accent text-onaccent font-display font-extrabold text-sm">
             R
           </span>
           <span className="font-display font-extrabold text-lg tracking-tight text-text">
-            Rentzo
+            rentzo<span className="text-accent">.</span>
           </span>
         </Link>
 
