@@ -43,6 +43,11 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 .eyebrow { font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .accent-panel { position: relative; overflow: hidden; background: var(--color-accent); }
 .accent-panel::after { content: ""; position: absolute; width: 190px; height: 190px; right: 7%; top: -80px; border: 1px solid rgba(9,13,22,.18); border-radius: 50%; box-shadow: 0 0 0 22px rgba(9,13,22,.05), 0 0 0 44px rgba(9,13,22,.05); }
+.catalog-toolbar { box-shadow: 6px 6px 0 rgba(38, 52, 74, .45); }
+.account-card { box-shadow: 0 0 0 rgba(213, 243, 74, 0); transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+.account-card:hover { transform: translateY(-4px); box-shadow: 7px 7px 0 rgba(213, 243, 74, .1); }
+.gallery-main { box-shadow: 10px 10px 0 rgba(38, 52, 74, .55); }
+.booking-panel { box-shadow: 9px 9px 0 rgba(213, 243, 74, .1); }
 @media (max-width: 640px) { body { background-size: 32px 32px; } .hero-card { transform: none; box-shadow: 7px 7px 0 rgba(213, 243, 74, .12); } .hero-wrap::before { right: -30%; top: 0; } }
 
 @keyframes marquee {
@@ -53,5 +58,5 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .animate-marquee { animation: none; }
-  .hero-card { transition: none; }
+  .hero-card, .account-card { transition: none; }
 }

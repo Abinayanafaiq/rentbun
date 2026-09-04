@@ -18,71 +18,82 @@ export default async function AkunDetail({ params }) {
   const photos = await photoUrls(account.photos || []);
 
   const specs = [
-    { label: "Rank", value: account.rank },
-    { label: "Jumlah hero", value: account.heroes },
-    { label: "Jumlah skin", value: account.skins },
-    { label: "Level akun", value: account.level },
+    { label: "Rank saat ini", value: account.rank, code: "RANK" },
+    { label: "Hero tersedia", value: account.heroes, code: "HERO" },
+    { label: "Koleksi skin", value: account.skins, code: "SKIN" },
+    { label: "Level akun", value: account.level, code: "LVL" },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      <Link href="/#katalog" className="font-semibold text-sm text-soft hover:text-text">
-        ← Kembali ke katalog
-      </Link>
+    <div className="account-detail max-w-6xl mx-auto px-4 pt-8 pb-20">
+      <nav className="flex items-center gap-2 text-sm mb-8" aria-label="Breadcrumb">
+        <Link href="/" className="font-semibold text-faint hover:text-accent">Beranda</Link>
+        <span className="text-line2">/</span>
+        <Link href="/#katalog" className="font-semibold text-faint hover:text-accent">Katalog</Link>
+        <span className="text-line2">/</span>
+        <span className="font-semibold text-soft line-clamp-1">{account.title}</span>
+      </nav>
 
-      <div className="grid md:grid-cols-2 gap-10 mt-6">
-        {/* Kiri: galeri foto + deskripsi */}
+      <div className="grid lg:grid-cols-[1.25fr_.75fr] gap-8 lg:gap-12 items-start">
         <div>
           {photos.length > 0 ? (
             <PhotoGallery photos={photos} title={account.title} />
           ) : (
-            <div className="aspect-video grid place-items-center rounded-lg border border-line bg-gradient-to-br from-accent2/60 to-bg">
-              <span className="font-display font-extrabold text-7xl text-text">ML</span>
+            <div className="gallery-main aspect-[4/3] grid place-items-center rounded-sm border border-line bg-gradient-to-br from-surface2 to-bg">
+              <div className="text-center"><span className="block font-display font-extrabold text-7xl text-accent">ML</span><span className="text-sm font-semibold text-soft">Preview belum tersedia</span></div>
             </div>
           )}
-          <div className="mt-6 bg-surface border border-line rounded-lg p-6">
-            <h2 className="font-display font-bold text-xl text-text mb-2">Detail akun</h2>
-            <p className="text-soft">{account.description}</p>
+
+          <div className="mt-8 border-t border-line pt-7">
+            <p className="eyebrow mb-3">Tentang akun</p>
+            <h2 className="font-display font-extrabold text-2xl text-text mb-3">Yang kamu dapatkan</h2>
+            <p className="text-soft leading-relaxed max-w-[68ch]">{account.description || "Informasi lengkap akun telah diverifikasi oleh admin sebelum ditampilkan di katalog."}</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-sm font-semibold text-soft">
+              <span className="flex items-center gap-2"><span className="text-ok">✓</span> Data login privat</span>
+              <span className="flex items-center gap-2"><span className="text-ok">✓</span> Dicek sebelum sewa</span>
+              <span className="flex items-center gap-2"><span className="text-ok">✓</span> Garansi kendala login</span>
+            </div>
           </div>
         </div>
 
-        {/* Kanan: info + harga */}
-        <div>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <h1 className="font-display font-extrabold text-[clamp(1.9rem,4vw,2.8rem)] leading-tight text-text">
-              {account.title}
-            </h1>
+        <aside className="lg:sticky lg:top-24">
+          <div className="flex items-center justify-between gap-4 mb-5">
+            <p className="eyebrow">Account dossier</p>
             <StatusBadge status={account.status} />
           </div>
+          <h1 className="section-heading font-display font-extrabold text-[clamp(2.2rem,5vw,3.8rem)] tracking-[-.04em] leading-[.98] text-text">
+              {account.title}
+          </h1>
 
-          <div className="grid grid-cols-2 gap-4 mt-7">
+          <div className="grid grid-cols-2 gap-px mt-8 bg-line border border-line rounded-sm overflow-hidden">
             {specs.map((s) => (
-              <div key={s.label} className="bg-surface border border-line rounded-lg p-4">
-                <p className="text-sm text-soft font-semibold">{s.label}</p>
-                <p className="font-display font-extrabold text-2xl mt-0.5 text-text">{s.value}</p>
+              <div key={s.label} className="relative bg-surface p-4 sm:p-5 min-h-28">
+                <p className="text-[10px] font-extrabold tracking-[.12em] text-accent">{s.code}</p>
+                <p className="font-display font-extrabold text-2xl sm:text-3xl mt-2 text-text line-clamp-1">{s.value}</p>
+                <p className="text-xs text-faint mt-1">{s.label}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-7 bg-surface border border-line rounded-lg p-6">
-            <p className="text-sm text-soft font-semibold">Harga sewa</p>
-            <p className="font-display font-extrabold text-4xl mt-1 text-text">
+          <div className="booking-panel mt-5 bg-surface border border-line rounded-sm p-5 sm:p-6">
+            <div className="flex items-end justify-between gap-4 border-b border-line pb-5">
+              <div><p className="text-xs text-soft font-semibold mb-1">Mulai dari</p><p className="font-display font-extrabold text-4xl text-text">
               {rp(account.price_per_hour)}
               <span className="font-body font-semibold text-base text-soft">/jam</span>
-            </p>
-            <p className="text-sm text-soft mt-2 mb-6">
-              Minimal sewa 1 jam, maksimal 72 jam. Email dan password akun tampil di halaman order setelah pembayaran terkonfirmasi.
-            </p>
+              </p></div>
+              <span className="text-right text-xs font-semibold text-faint">Min. 1 jam<br />Maks. 72 jam</span>
+            </div>
+            <p className="text-sm leading-relaxed text-soft my-5">Data login muncul setelah pembayaran terkonfirmasi. Hanya kamu yang memegang akun selama masa sewa.</p>
             {ready ? (
               <Link
                 href={`/sewa/${account.id}`}
-                className="block text-center font-bold px-6 py-4 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
+                className="group flex items-center justify-between font-extrabold px-5 py-4 rounded-sm bg-accent text-onaccent hover:bg-accent2 transition-colors"
               >
-                Sewa akun ini
+                <span>Sewa akun ini</span><span className="grid place-items-center w-7 h-7 rounded-sm bg-onaccent/10">›</span>
               </Link>
             ) : (
               <div>
-                <span className="block text-center font-bold px-6 py-4 rounded-md border border-line/60 text-faint cursor-not-allowed">
+                <span className="block text-center font-bold px-6 py-4 rounded-sm border border-line/60 text-faint cursor-not-allowed">
                   Sedang disewa
                 </span>
                 <p className="text-sm text-soft mt-3 text-center">
@@ -91,7 +102,7 @@ export default async function AkunDetail({ params }) {
               </div>
             )}
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
