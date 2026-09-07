@@ -52,6 +52,7 @@ export default function AccountCard({ account }) {
             <p className="mt-1 text-xs text-faint">Rental akun Mobile Legends</p>
           </div>
           <span className="shrink-0 text-right">
+            <small className="block text-[10px] text-faint">Mulai dari</small>
             <strong className="block font-display text-base text-text">{rp(account.price_per_hour)}</strong>
             <small className="text-[10px] text-faint">per jam</small>
           </span>
