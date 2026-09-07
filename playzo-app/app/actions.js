@@ -24,6 +24,8 @@ import { markOrderPaid } from "@/lib/orders";
 import {
   getVoucherBonusDays,
   getCommissionRate,
+  getCommissionRateUsd,
+  getUsdRate,
   cleanCoupon,
   generateCoupon,
   couponExists,
@@ -154,8 +156,12 @@ export async function createOrder(prev, formData) {
     return { error: t.errors.accountGone };
   }
 
+  // Mata uang: IDR (lokal) atau USD (luar negeri, bayar crypto)
+  const currency = String(formData.get("currency") || "IDR").toUpperCase() === "USD" ? "USD" : "IDR";
+
   let hours, total, packageLabel = null;
   let packageCommissionRate = 0;
+  let packageCommissionRateUsd = 0;
 
   if (packageId > 0) {
     // Paket: harga & durasi selalu diambil dari database, jangan percaya client
@@ -165,12 +171,23 @@ export async function createOrder(prev, formData) {
       return { error: t.errors.pkgNotFound };
     }
     hours = pkg.duration_hours;
-    total = pkg.price;
     packageLabel = pkg.label;
     packageCommissionRate = pkg.commission_rate || 0;
+    packageCommissionRateUsd = pkg.commission_rate_usd || 0;
+    if (currency === "USD") {
+      total = pkg.price_usd;
+      if (!total) return { error: t.errors.noUsdPrice };
+    } else {
+      total = pkg.price;
+    }
   } else {
     hours = Math.max(1, Math.min(72, Number(formData.get("hours")) || 1));
-    total = account.price_per_hour * hours;
+    if (currency === "USD") {
+      const usdRate = await getUsdRate();
+      total = Math.max(1, Math.round(account.price_per_hour / usdRate)) * hours;
+    } else {
+      total = account.price_per_hour * hours;
+    }
   }
 
   // Kupon marketer (opsional): bonus masa aktif, harga tetap
@@ -193,19 +210,26 @@ export async function createOrder(prev, formData) {
     marketerId = mk[0].marketer_id;
     couponCode = coupon;
     bonusHours = (await getVoucherBonusDays()) * 24;
-    // Komisi marketer: paket pakai rate paket, per jam pakai rate global
-    commission = packageId > 0
-      ? Math.round((total * packageCommissionRate) / 100)
-      : Math.round((total * (await getCommissionRate())) / 100);
+    // Komisi marketer: paket pakai rate paket, per jam pakai rate global.
+    // Mata uang berbeda pakai rate berbeda.
+    if (currency === "USD") {
+      commission = packageId > 0
+        ? Math.round((total * packageCommissionRateUsd) / 100)
+        : Math.round((total * (await getCommissionRateUsd())) / 100);
+    } else {
+      commission = packageId > 0
+        ? Math.round((total * packageCommissionRate) / 100)
+        : Math.round((total * (await getCommissionRate())) / 100);
+    }
   }
 
   const code = "RZ-" + crypto.randomBytes(3).toString("hex").toUpperCase();
 
   const userId = await getUserId();
   await q(
-    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours, commission)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours, commission]
+    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours, commission, currency)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours, commission, currency]
   );
 
   redirect(`/order/${code}`);
@@ -395,19 +419,21 @@ export async function savePackage(formData) {
   const label = String(formData.get("label") || "").trim();
   const durationHours = Math.max(1, Math.min(720, Number(formData.get("duration_hours")) || 0));
   const price = Math.max(0, Number(formData.get("price")) || 0);
+  const priceUsd = Math.max(0, Number(formData.get("price_usd")) || 0);
   const commissionRate = Math.max(0, Math.min(100, Number(formData.get("commission_rate")) || 0));
+  const commissionRateUsd = Math.max(0, Math.min(100, Number(formData.get("commission_rate_usd")) || 0));
 
   if (!label || !durationHours || !price) {
     redirect(id ? `/admin/paket/${id}` : "/admin/paket/baru");
   }
 
   if (id) {
-    await q("UPDATE packages SET label = $1, duration_hours = $2, price = $3, commission_rate = $4 WHERE id = $5", [
-      label, durationHours, price, commissionRate, id,
+    await q("UPDATE packages SET label = $1, duration_hours = $2, price = $3, commission_rate = $4, price_usd = $5, commission_rate_usd = $6 WHERE id = $7", [
+      label, durationHours, price, commissionRate, priceUsd, commissionRateUsd, id,
     ]);
   } else {
-    await q("INSERT INTO packages (label, duration_hours, price, commission_rate) VALUES ($1, $2, $3, $4)", [
-      label, durationHours, price, commissionRate,
+    await q("INSERT INTO packages (label, duration_hours, price, commission_rate, price_usd, commission_rate_usd) VALUES ($1, $2, $3, $4, $5, $6)", [
+      label, durationHours, price, commissionRate, priceUsd, commissionRateUsd,
     ]);
   }
 
@@ -507,6 +533,23 @@ export async function saveCommissionSettings(formData) {
     `INSERT INTO settings (key, value) VALUES ('coupon_commission_rate', $1)
      ON CONFLICT (key) DO UPDATE SET value = $1`,
     [String(rate)]
+  );
+  revalidatePath("/admin/marketer");
+}
+
+export async function saveUsdSettings(formData) {
+  await guard();
+  const rateUsd = Math.max(0, Math.min(100, Number(formData.get("commission_rate_usd")) || 0));
+  const usdRate = Math.max(1, Number(formData.get("usd_rate")) || 15000);
+  await q(
+    `INSERT INTO settings (key, value) VALUES ('coupon_commission_rate_usd', $1)
+     ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [String(rateUsd)]
+  );
+  await q(
+    `INSERT INTO settings (key, value) VALUES ('usd_rate', $1)
+     ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [String(usdRate)]
   );
   revalidatePath("/admin/marketer");
 }

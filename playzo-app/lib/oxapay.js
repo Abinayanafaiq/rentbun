@@ -20,7 +20,7 @@ export async function createInvoice(order) {
       cache: "no-store",
       body: JSON.stringify({
         amount: order.total,
-        currency: process.env.OXAPAY_CURRENCY || "IDR", // nominal invoice dalam rupiah
+        currency: order.currency === "USD" ? "USDT" : process.env.OXAPAY_CURRENCY || "IDR", // nominal invoice dalam mata uang order
         lifetime: 60, // menit
         fee_paid_by_payer: 1, // fee ditanggung pembeli, nominal order tetap pas
         under_paid_coverage: 0,

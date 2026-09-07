@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
-import { rp, tanggal } from "@/lib/format";
-import { getVoucherBonusDays, getCommissionRate } from "@/lib/marketers";
-import { saveVoucherSettings, saveCommissionSettings, toggleMarketer, deleteMarketer } from "@/app/actions";
+import { rp, usd, tanggal } from "@/lib/format";
+import { getVoucherBonusDays, getCommissionRate, getCommissionRateUsd, getUsdRate } from "@/lib/marketers";
+import { saveVoucherSettings, saveCommissionSettings, saveUsdSettings, toggleMarketer, deleteMarketer } from "@/app/actions";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { input } from "@/components/ui";
 
@@ -16,13 +16,14 @@ const BTN = "text-xs font-bold px-3.5 py-1.5 rounded-md border border-line trans
 export default async function AdminMarketer() {
   if (!(await isAdmin())) redirect("/admin/login");
 
-  const [{ rows: marketers }, bonusDays, commissionRate] = await Promise.all([
+  const [{ rows: marketers }, bonusDays, commissionRate, commissionRateUsd, usdRate] = await Promise.all([
     q(`
       SELECT m.*,
         (SELECT string_agg(c.code, ', ' ORDER BY c.id) FROM coupons c WHERE c.marketer_id = m.id AND c.active) AS coupon_codes,
         count(o.id) FILTER (WHERE o.status IN ('paid', 'done')) AS used_count,
         coalesce(sum(o.bonus_hours) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS bonus_given,
-        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS commission_earned
+        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'IDR'), 0) AS commission_earned,
+        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'USD'), 0) AS commission_earned_usd
       FROM marketers m
       LEFT JOIN orders o ON o.marketer_id = m.id
       GROUP BY m.id
@@ -30,6 +31,8 @@ export default async function AdminMarketer() {
     `),
     getVoucherBonusDays(),
     getCommissionRate(),
+    getCommissionRateUsd(),
+    getUsdRate(),
   ]);
 
   return (
@@ -83,7 +86,7 @@ export default async function AdminMarketer() {
           Komisi untuk order yang memakai kupon marketer. Nilai ini dipakai untuk sewa per jam dan menjadi default.
           Untuk paket sewa, rate diatur per paket di halaman Kelola paket sewa.
         </p>
-        <form action={saveCommissionSettings} className="flex flex-wrap items-end gap-3">
+        <form action={saveCommissionSettings} className="flex flex-wrap items-end gap-3 mb-4">
           <label className="block">
             <span className="font-semibold text-sm">Rate komisi (%)</span>
             <input
@@ -99,6 +102,38 @@ export default async function AdminMarketer() {
             Simpan rate komisi
           </button>
         </form>
+        <div className="border-t border-line pt-4">
+          <p className="text-sm text-soft mb-3">
+            Untuk pembeli luar negeri (bayar crypto), pakai rate terpisah dan kurs tetap IDR→USD.
+          </p>
+          <form action={saveUsdSettings} className="flex flex-wrap items-end gap-3">
+            <label className="block">
+              <span className="font-semibold text-sm">Rate komisi USD (%)</span>
+              <input
+                name="commission_rate_usd"
+                type="number"
+                min="0"
+                max="100"
+                defaultValue={commissionRateUsd}
+                className={`${input} w-36`}
+              />
+            </label>
+            <label className="block">
+              <span className="font-semibold text-sm">Kurs tetap (Rp / USD)</span>
+              <input
+                name="usd_rate"
+                type="number"
+                min="1"
+                step="100"
+                defaultValue={usdRate}
+                className={`${input} w-36`}
+              />
+            </label>
+            <button className="font-bold text-sm px-5 py-2.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors">
+              Simpan kurs &amp; rate USD
+            </button>
+          </form>
+        </div>
       </div>
 
       {marketers.length === 0 ? (
@@ -137,7 +172,12 @@ export default async function AdminMarketer() {
                   <td className="p-4 text-text">
                     {m.bonus_given > 0 ? `${Math.round(m.bonus_given / 24)} hari` : "-"}
                   </td>
-                  <td className="p-4 font-semibold text-text">{rp(m.commission_earned)}</td>
+                  <td className="p-4">
+                    <span className="font-semibold text-text">{rp(m.commission_earned)}</span>
+                    {m.commission_earned_usd > 0 && (
+                      <span className="block text-xs font-semibold text-text">{usd(m.commission_earned_usd)}</span>
+                    )}
+                  </td>
                   <td className="p-4">
                     <span
                       className={`inline-flex text-xs font-bold px-2.5 py-1 rounded border whitespace-nowrap ${

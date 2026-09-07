@@ -7,11 +7,18 @@ import { card, input, span, label, btnPrimary } from "@/components/ui";
 import { dict, fill } from "@/lib/dict";
 
 const rp = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
+const usd = (n) => "$" + Number(n || 0).toLocaleString("en-US");
 
-export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "", bonusDays = 3, t = dict.id.checkout }) {
+export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "", bonusDays = 3, usdRate = 15000, t = dict.id.checkout }) {
   const [hours, setHours] = useState(3);
   const [mode, setMode] = useState("custom"); // "custom" atau string id paket
+  const [currency, setCurrency] = useState("IDR"); // "IDR" atau "USD"
   const [state, formAction, pending] = useActionState(createOrder, null);
+
+  // Harga akun per jam dalam mata uang aktif
+  const perHour = currency === "USD"
+    ? Math.max(1, Math.round(account.price_per_hour / (usdRate || 15000)))
+    : account.price_per_hour;
 
   function durasiText(h) {
     if (h % 24 === 0) {
@@ -23,12 +30,60 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
   }
 
   const selectedPkg = packages.find((p) => String(p.id) === mode);
-  const total = selectedPkg ? selectedPkg.price : account.price_per_hour * hours;
+  const usdUnavailable = currency === "USD" && selectedPkg && !selectedPkg.price_usd;
+  const pkgPrice = selectedPkg ? (currency === "USD" ? selectedPkg.price_usd : selectedPkg.price) : 0;
+  const total = selectedPkg ? pkgPrice : perHour * hours;
+  const fmt = (n) => (currency === "USD" ? usd(n) : rp(n));
+
+  function changeCurrency(next) {
+    setCurrency(next);
+    if (next === "USD" && selectedPkg && !selectedPkg.price_usd) {
+      setMode("custom");
+    }
+  }
 
   return (
     <form action={formAction} className={`${card} p-6`}>
       <input type="hidden" name="account_id" value={account.id} />
       <input type="hidden" name="package_id" value={selectedPkg ? selectedPkg.id : 0} />
+      <input type="hidden" name="currency" value={currency} />
+      <input type="hidden" name="usd_rate" value={usdRate} />
+
+      {/* Pilih mata uang */}
+      <p className="font-semibold text-sm mb-2">{t.currency}</p>
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
+        <label
+          className={`flex items-center justify-center gap-2 border rounded-md px-4 py-3 cursor-pointer transition-colors ${
+            currency === "IDR" ? "border-accent bg-accent/10" : "border-line hover:border-line2"
+          }`}
+        >
+          <input
+            type="radio"
+            name="currency_mode"
+            checked={currency === "IDR"}
+            onChange={() => changeCurrency("IDR")}
+            className="w-4 h-4 accent-[#9146FF]"
+          />
+          <span className="font-semibold text-sm">{t.curIdr}</span>
+        </label>
+        <label
+          className={`flex items-center justify-center gap-2 border rounded-md px-4 py-3 cursor-pointer transition-colors ${
+            currency === "USD" ? "border-accent bg-accent/10" : "border-line hover:border-line2"
+          }`}
+        >
+          <input
+            type="radio"
+            name="currency_mode"
+            checked={currency === "USD"}
+            onChange={() => changeCurrency("USD")}
+            className="w-4 h-4 accent-[#9146FF]"
+          />
+          <span className="font-semibold text-sm">{t.curUsd}</span>
+        </label>
+      </div>
+      {currency === "USD" && (
+        <p className="text-xs text-soft -mt-3 mb-5">{t.curUsdHint}</p>
+      )}
 
       <label className={`${label} mb-4`}>
         <span className={span}>{t.name}</span>
@@ -79,7 +134,7 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
             className="w-4 h-4 accent-[#9146FF]"
           />
           <span className="font-semibold flex-1">{t.perHour}</span>
-          <span className="text-sm text-soft">{rp(account.price_per_hour)}{t.perHourUnit}</span>
+          <span className="text-sm text-soft">{fmt(perHour)}{t.perHourUnit}</span>
         </label>
 
         {mode === "custom" && (
@@ -101,17 +156,25 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
 
         {/* Opsi paket dari admin */}
         {packages.map((p) => {
-          const hemat = account.price_per_hour * p.duration_hours - p.price;
+          const isUsd = currency === "USD";
+          const noUsd = isUsd && !p.price_usd;
+          const idrHemat = account.price_per_hour * p.duration_hours - p.price;
+          const usdHemat = isUsd && p.price_usd
+            ? Math.max(1, Math.round(account.price_per_hour / (usdRate || 15000))) * p.duration_hours - p.price_usd
+            : 0;
+          const hemat = isUsd ? usdHemat : idrHemat;
+          const pkgShow = isUsd && p.price_usd ? p.price_usd : p.price;
           return (
             <label
               key={p.id}
               className={`flex items-center gap-3 border rounded-md px-4 py-3 cursor-pointer transition-colors ${
-                mode === String(p.id) ? "border-accent bg-accent/10" : "border-line hover:border-line2"
+                noUsd ? "opacity-60" : mode === String(p.id) ? "border-accent bg-accent/10" : "border-line hover:border-line2"
               }`}
             >
               <input
                 type="radio"
                 name="durasi_mode"
+                disabled={noUsd}
                 checked={mode === String(p.id)}
                 onChange={() => setMode(String(p.id))}
                 className="w-4 h-4 accent-[#9146FF]"
@@ -121,9 +184,15 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
                 <span className="block text-xs font-medium text-soft">{durasiText(p.duration_hours)}</span>
               </span>
               <span className="text-right">
-                <span className="font-bold block">{rp(p.price)}</span>
-                {hemat > 0 && (
-                  <span className="text-xs font-semibold text-ok">{fill(t.save, { amount: rp(hemat) })}</span>
+                {noUsd ? (
+                  <span className="text-xs font-semibold text-faint">{t.usdUnavailable}</span>
+                ) : (
+                  <>
+                    <span className="font-bold block">{fmt(pkgShow)}</span>
+                    {hemat > 0 && (
+                      <span className="text-xs font-semibold text-ok">{fill(t.save, { amount: fmt(hemat) })}</span>
+                    )}
+                  </>
                 )}
               </span>
             </label>
@@ -131,10 +200,13 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
         })}
       </div>
 
-      <div className="flex items-center justify-between border-t border-line pt-4 mt-2 mb-5">
+      <div className="flex items-center justify-between border-t border-line pt-4 mt-2 mb-2">
         <span className="font-semibold">{t.total}</span>
-        <span className="font-display font-extrabold text-3xl text-text">{rp(total)}</span>
+        <span className="font-display font-extrabold text-3xl text-text">{fmt(total)}</span>
       </div>
+      {currency === "USD" && (
+        <p className="text-xs text-soft mb-5">{t.curPayNote}</p>
+      )}
 
       {state?.error && (
         <p className="mb-4 text-sm font-semibold text-live bg-livebg border border-live/50 rounded-md px-4 py-2.5">

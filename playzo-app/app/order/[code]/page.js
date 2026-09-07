@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { q } from "@/lib/db";
-import { rp, tanggal } from "@/lib/format";
+import { rp, money, tanggal } from "@/lib/format";
 import { waLink } from "@/lib/site";
 import { pakasirPayUrl } from "@/lib/pakasir";
 import { oxapayEnabled } from "@/lib/oxapay";
@@ -25,6 +25,8 @@ export default async function OrderPage({ params }) {
   );
   const order = rows[0];
   if (!order) notFound();
+
+  const isUsd = order.currency === "USD";
 
   const baseDuration = order.package_label
     ? fill(t.order.pkg, { label: order.package_label })
@@ -69,7 +71,7 @@ export default async function OrderPage({ params }) {
         </div>
         <div className="flex items-center justify-between border-t border-line pt-4 mt-4">
           <span className="font-semibold">{t.order.total}</span>
-          <span className="font-display font-extrabold text-3xl text-text">{rp(order.total)}</span>
+          <span className="font-display font-extrabold text-3xl text-text">{money(order.total, order.currency)}</span>
         </div>
       </div>
 
@@ -78,14 +80,16 @@ export default async function OrderPage({ params }) {
         <div className="bg-surface border border-line rounded-lg p-6">
           <h2 className="font-display font-bold text-xl text-text mb-2">{t.order.pendingTitle}</h2>
           <p className="text-sm text-soft mb-5">
-            {t.order.pendingDesc}
+            {isUsd ? t.order.pendingUsdDesc : t.order.pendingDesc}
           </p>
-          <a
-            href={pakasirPayUrl(order)}
-            className="block text-center font-bold px-6 py-4 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
-          >
-            {fill(t.order.pay, { total: rp(order.total) })}
-          </a>
+          {!isUsd && (
+            <a
+              href={pakasirPayUrl(order)}
+              className="block text-center font-bold px-6 py-4 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
+            >
+              {fill(t.order.pay, { total: rp(order.total) })}
+            </a>
+          )}
           {oxapayEnabled() && (
             <CryptoPayButton
               code={order.code}

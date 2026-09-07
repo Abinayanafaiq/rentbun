@@ -19,6 +19,22 @@ export async function getCommissionRate() {
   return Math.min(Math.floor(n), 100);
 }
 
+// Rate komisi global (%) untuk order USD per jam. Default 5%.
+export async function getCommissionRateUsd() {
+  const { rows } = await q("SELECT value FROM settings WHERE key = 'coupon_commission_rate_usd'");
+  const n = Number(rows[0]?.value);
+  if (!Number.isFinite(n) || n < 0) return 5;
+  return Math.min(Math.floor(n), 100);
+}
+
+// Kurs tetap (IDR per 1 USD) untuk konversi & penampilan. Default 15000.
+export async function getUsdRate() {
+  const { rows } = await q("SELECT value FROM settings WHERE key = 'usd_rate'");
+  const n = Number(rows[0]?.value);
+  if (!Number.isFinite(n) || n <= 0) return 15000;
+  return Math.floor(n);
+}
+
 // Komisi rupiah dari total order: paket pakai rate paket, per jam pakai rate global.
 export async function commissionForOrder(order, packageCommissionRate = null) {
   const rate = packageCommissionRate ?? (await getCommissionRate());

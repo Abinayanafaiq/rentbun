@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
-import { rp, tanggal } from "@/lib/format";
+import { rp, money, tanggal } from "@/lib/format";
 import { markPaid, markDone, cancelOrder, logout } from "@/app/actions";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
@@ -120,7 +120,7 @@ export default async function AdminDashboard() {
                       </span>
                     )}
                   </td>
-                  <td className="p-4 font-bold text-text">{rp(o.total)}</td>
+                  <td className="p-4 font-bold text-text">{money(o.total, o.currency)}</td>
                   <td className="p-4">
                     <StatusBadge status={o.status} />
                   </td>

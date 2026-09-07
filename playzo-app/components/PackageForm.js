@@ -41,23 +41,53 @@ export default function PackageForm({ pkg }) {
             className={input}
           />
         </label>
+        <label className={label}>
+          <span className={span}>Harga paket (USD) — luar negeri</span>
+          <input
+            name="price_usd"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={p.price_usd ?? 0}
+            placeholder="contoh: 10"
+            className={input}
+          />
+          <span className="text-xs text-soft mt-1 block">Untuk pembeli luar negeri yang bayar crypto. 0 = belum tersedia di luar negeri.</span>
+        </label>
       </div>
 
-      <label className={`${label} mb-6`}>
-        <span className={span}>Komisi marketer untuk paket ini (%)</span>
-        <input
-          name="commission_rate"
-          type="number"
-          min="0"
-          max="100"
-          defaultValue={p.commission_rate ?? 0}
-          placeholder="contoh: 10"
-          className={input}
-        />
-        <span className="text-xs text-soft mt-1 block">
-          Persen dari harga paket yang menjadi pendapatan marketer saat pembeli pakai kuponnya. Kosongkan / 0 untuk tanpa komisi.
-        </span>
-      </label>
+      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <label className={label}>
+          <span className={span}>Komisi marketer untuk paket ini (Rp) (%)</span>
+          <input
+            name="commission_rate"
+            type="number"
+            min="0"
+            max="100"
+            defaultValue={p.commission_rate ?? 0}
+            placeholder="contoh: 10"
+            className={input}
+          />
+          <span className="text-xs text-soft mt-1 block">
+            Persen dari harga Rp yang menjadi pendapatan marketer saat pembeli pakai kuponnya. 0 = tanpa komisi.
+          </span>
+        </label>
+        <label className={label}>
+          <span className={span}>Komisi marketer paket ini (USD) (%)</span>
+          <input
+            name="commission_rate_usd"
+            type="number"
+            min="0"
+            max="100"
+            defaultValue={p.commission_rate_usd ?? 0}
+            placeholder="contoh: 10"
+            className={input}
+          />
+          <span className="text-xs text-soft mt-1 block">
+            Persen dari harga USD yang menjadi pendapatan marketer saat pembeli luar negeri pakai kuponnya.
+          </span>
+        </label>
+      </div>
 
       <button type="submit" className={btnPrimary}>
         {p.id ? "Simpan perubahan" : "Tambah paket"}

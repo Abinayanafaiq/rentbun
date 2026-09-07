@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentMarketer } from "@/lib/marketerAuth";
 import { getVoucherBonusDays } from "@/lib/marketers";
 import { q } from "@/lib/db";
-import { rp, tanggal } from "@/lib/format";
+import { rp, usd, tanggal } from "@/lib/format";
 import { logoutMarketer, toggleCoupon, deleteCoupon } from "@/app/actions";
 import { getDict, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
@@ -36,21 +36,30 @@ export default async function MarketerDashboard() {
       [m.id]
     ),
     q(
-      `SELECT coalesce(sum(commission), 0) AS total
-       FROM orders
-       WHERE marketer_id = $1 AND status IN ('paid', 'done')`,
+      `SELECT
+         coalesce(sum(commission) FILTER (WHERE o.currency = 'IDR'), 0) AS total_idr,
+         coalesce(sum(commission) FILTER (WHERE o.currency = 'USD'), 0) AS total_usd
+       FROM orders o
+       WHERE o.marketer_id = $1 AND o.status IN ('paid', 'done')`,
       [m.id]
     ),
   ]);
 
   const activeCoupons = coupons.filter((c) => c.active).length;
   const totalUsed = coupons.reduce((sum, c) => sum + Number(c.used_count), 0);
-  const totalCommission = Number(commRows[0]?.total || 0);
+  const totalCommissionIdr = Number(commRows[0]?.total_idr || 0);
+  const totalCommissionUsd = Number(commRows[0]?.total_usd || 0);
+  const commissionValue = (
+    <span>
+      {rp(totalCommissionIdr)}
+      {totalCommissionUsd > 0 && <span className="block text-base font-bold text-ok">{usd(totalCommissionUsd)}</span>}
+    </span>
+  );
   const cards = [
     { label: t.marketer.statActive, value: activeCoupons },
     { label: t.marketer.statUsed, value: `${totalUsed}x` },
     { label: t.marketer.statBonus, value: fill(t.marketer.bonusDaysValue, { days: bonusDays }) },
-    { label: t.marketer.statCommission, value: rp(totalCommission) },
+    { label: t.marketer.statCommission, value: commissionValue },
   ];
 
   return (
@@ -160,7 +169,7 @@ export default async function MarketerDashboard() {
                   </td>
                   <td className="p-4 text-ok font-semibold">{fill(t.marketer.bonusDaysValue, { days: Math.round(o.bonus_hours / 24) })}</td>
                   <td className="p-4 font-semibold text-text">
-                    {o.commission > 0 ? rp(o.commission) : "-"}
+                    {o.commission > 0 ? (o.currency === "USD" ? usd(o.commission) : rp(o.commission)) : "-"}
                     {o.status === "pending" && <span className="block text-[10px] font-normal text-faint">estimasi</span>}
                   </td>
                   <td className="p-4">

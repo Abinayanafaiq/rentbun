@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { q } from "@/lib/db";
 import { rp } from "@/lib/format";
 import { getCurrentUser } from "@/lib/userAuth";
-import { getVoucherBonusDays } from "@/lib/marketers";
+import { getVoucherBonusDays, getUsdRate } from "@/lib/marketers";
 import { getDict } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
 import CheckoutForm from "@/components/CheckoutForm";
@@ -12,11 +12,12 @@ export const dynamic = "force-dynamic";
 
 export default async function SewaPage({ params }) {
   const { id } = await params;
-  const [{ rows }, { rows: packages }, user, bonusDays, t] = await Promise.all([
+  const [{ rows }, { rows: packages }, user, bonusDays, usdRate, t] = await Promise.all([
     q("SELECT id, title, rank, heroes, skins, price_per_hour, status FROM accounts WHERE id = $1", [Number(id) || 0]),
-    q("SELECT id, label, duration_hours, price FROM packages ORDER BY duration_hours ASC"),
+    q("SELECT id, label, duration_hours, price, price_usd FROM packages ORDER BY duration_hours ASC"),
     getCurrentUser(),
     getVoucherBonusDays(),
+    getUsdRate(),
     getDict(),
   ]);
   const account = rows[0];
@@ -62,7 +63,7 @@ export default async function SewaPage({ params }) {
           </div>
         </div>
 
-        <CheckoutForm account={account} packages={packages} defaultName={user?.name} defaultWa={user?.wa} bonusDays={bonusDays} t={t.checkout} />
+        <CheckoutForm account={account} packages={packages} usdRate={usdRate} defaultName={user?.name} defaultWa={user?.wa} bonusDays={bonusDays} t={t.checkout} />
       </div>
     </div>
   );

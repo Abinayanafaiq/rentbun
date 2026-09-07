@@ -2,6 +2,15 @@ export function rp(n) {
   return "Rp" + Number(n || 0).toLocaleString("id-ID");
 }
 
+export function usd(n) {
+  return "$" + Number(n || 0).toLocaleString("en-US");
+}
+
+// Format sesuai mata uang order: IDR → rp, USD → usd
+export function money(n, currency = "IDR") {
+  return (currency || "IDR") === "USD" ? usd(n) : rp(n);
+}
+
 export function tanggal(d) {
   return new Date(d).toLocaleString("id-ID", {
     dateStyle: "medium",

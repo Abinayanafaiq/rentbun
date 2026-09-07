@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
-import { rp } from "@/lib/format";
+import { rp, usd } from "@/lib/format";
 import { deletePackage } from "@/app/actions";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 
@@ -51,9 +51,17 @@ export default async function AdminPaket() {
             <div key={p.id} className="bg-surface border border-line rounded-lg p-5 flex flex-col">
               <p className="font-display font-extrabold text-2xl text-text">{p.label}</p>
               <p className="text-sm text-soft">{durasiText(p.duration_hours)} ({p.duration_hours} jam)</p>
-              <p className="font-display font-extrabold text-3xl mt-3 mb-5 text-text">{rp(p.price)}</p>
+              <p className="font-display font-extrabold text-3xl mt-3 mb-2 text-text">{rp(p.price)}</p>
+              {p.price_usd > 0 ? (
+                <p className="font-display font-extrabold text-lg mb-2 text-text">{usd(p.price_usd)} <span className="text-xs font-normal text-soft">(luar negeri)</span></p>
+              ) : (
+                <p className="text-xs text-faint mb-2">Belum ada harga luar negeri (USD)</p>
+              )}
               <p className="text-xs font-semibold text-soft mb-4">
-                Komisi marketer: <span className="text-text">{p.commission_rate > 0 ? `${p.commission_rate}%` : "Tanpa komisi"}</span>
+                Komisi marketer: <span className="text-text">{p.commission_rate > 0 ? `${p.commission_rate}% Rp` : "Tanpa komisi (Rp)"}</span>
+                {p.commission_rate_usd > 0 && (
+                  <span className="text-text"> · {p.commission_rate_usd}% USD</span>
+                )}
               </p>
               <div className="flex gap-2 mt-auto">
                 <Link
