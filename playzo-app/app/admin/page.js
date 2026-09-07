@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
-import { rp, money, tanggal } from "@/lib/format";
+import { rp, usd, money, tanggal } from "@/lib/format";
 import { markPaid, markDone, cancelOrder, logout } from "@/app/actions";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
@@ -23,6 +23,7 @@ export default async function AdminDashboard() {
         (SELECT count(*) FROM orders WHERE status = 'pending') AS pending,
         (SELECT coalesce(sum(o.total * CASE WHEN o.currency = 'USD' THEN coalesce((SELECT value::int FROM settings WHERE key = 'usd_rate'), 15000) ELSE 1 END), 0)
          FROM orders o WHERE o.status IN ('paid', 'done')) AS revenue,
+        (SELECT coalesce(sum(o.total), 0) FROM orders o WHERE o.status IN ('paid', 'done') AND o.currency = 'USD') AS revenue_usd,
         (SELECT count(*) FROM users) AS total_users,
         (SELECT count(*) FROM marketers WHERE active) AS marketers
     `),
@@ -37,6 +38,7 @@ export default async function AdminDashboard() {
     { label: "Akun sedang disewa", value: s.rented },
     { label: "Order menunggu bayar", value: s.pending },
     { label: "Total pendapatan", value: rp(s.revenue) },
+    { label: "Pendapatan dari Dollar", value: usd(s.revenue_usd) },
   ];
 
   return (
@@ -74,7 +76,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-11">
+      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-11">
         {cards.map((c) => (
           <div key={c.label} className="bg-surface border border-line rounded-lg p-5">
             <p className="text-sm font-semibold text-soft">{c.label}</p>

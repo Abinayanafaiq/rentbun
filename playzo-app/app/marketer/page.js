@@ -57,6 +57,7 @@ export default async function MarketerDashboard() {
     { label: t.marketer.statUsed, value: `${totalUsed}x` },
     { label: t.marketer.statBonus, value: fill(t.marketer.bonusDaysValue, { days: bonusDays }) },
     { label: t.marketer.statCommission, value: commissionValue },
+    { label: t.marketer.statCommissionUsd, value: usd(totalCommissionUsd) },
   ];
 
   return (
@@ -74,7 +75,7 @@ export default async function MarketerDashboard() {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-11">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-11">
         {cards.map((c) => (
           <div key={c.label} className="bg-surface border border-line rounded-lg p-5">
             <p className="text-sm font-semibold text-soft">{c.label}</p>

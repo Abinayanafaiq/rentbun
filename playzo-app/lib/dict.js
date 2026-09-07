@@ -273,6 +273,7 @@ export const dict = {
       statBonus: "Bonus per pemakaian",
       bonusDaysValue: "+{days} hari",
       statCommission: "Komisi saya",
+      statCommissionUsd: "Komisi Dollar",
       createTitle: "Buat kode kupon baru",
       createDesc:
         "Setiap penyewa yang memasukkan kodemu saat checkout dapat bonus masa aktif sewa +{days} hari, gratis. Bagikan kodenya di konten, status WA, atau ke teman langsung.",
@@ -594,6 +595,7 @@ export const dict = {
       statBonus: "Bonus per use",
       bonusDaysValue: "+{days} days",
       statCommission: "My commission",
+      statCommissionUsd: "Dollar commission",
       createTitle: "Create a new coupon code",
       createDesc:
         "Every renter who enters your code at checkout gets a free +{days}-day rental extension. Share your code in content, WA status, or directly to friends.",
