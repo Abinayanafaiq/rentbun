@@ -123,7 +123,7 @@ export default async function AdminMarketer() {
               <input
                 name="usd_rate"
                 type="number"
-                min="1"
+                min="100"
                 step="100"
                 defaultValue={usdRate}
                 className={`${input} w-36`}
