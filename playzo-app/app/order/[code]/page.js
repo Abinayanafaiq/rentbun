@@ -42,6 +42,11 @@ export default async function OrderPage({ params }) {
           <span className="text-soft font-semibold">Durasi</span>
           <span className="font-bold text-right text-text">
             {order.package_label ? `Paket ${order.package_label}` : `${order.hours} jam`}
+            {order.bonus_hours > 0 && (
+              <span className="block text-xs font-semibold text-ok">
+                +{Math.round(order.bonus_hours / 24)} hari bonus kupon {order.coupon_code}
+              </span>
+            )}
           </span>
           <span className="text-soft font-semibold">Dibuat</span>
           <span className="font-bold text-right text-text">{tanggal(order.created_at)}</span>
@@ -91,8 +96,15 @@ export default async function OrderPage({ params }) {
         <div className="bg-surface border border-line rounded-lg p-6">
           <h2 className="font-display font-bold text-xl text-text mb-1">Akun kamu siap</h2>
           <p className="text-sm text-soft mb-5">
-            Login pakai data di bawah. Durasi {order.package_label ? `paket ${order.package_label}` : `${order.hours} jam`} dihitung sejak kamu login. Jangan ganti password akun.
+            Login pakai data di bawah. Durasi {order.package_label ? `paket ${order.package_label}` : `${order.hours} jam`}
+            {order.bonus_hours > 0 && ` + bonus ${Math.round(order.bonus_hours / 24)} hari dari kupon ${order.coupon_code}`} dihitung
+            sejak kamu login. Jangan ganti password akun.
           </p>
+          {order.bonus_hours > 0 && (
+            <p className="mb-5 text-sm font-semibold text-ok bg-ok/10 border border-ok/40 rounded-md px-4 py-2.5">
+              Kupon {order.coupon_code} berhasil dipakai — masa aktif sewamu diperpanjang {Math.round(order.bonus_hours / 24)} hari gratis.
+            </p>
+          )}
           <div className="space-y-3">
             <CopyField label="Email akun" value={order.email || "Hubungi admin"} />
             <CopyField label="Password" value={order.account_password || "Hubungi admin"} />

@@ -15,6 +15,7 @@ import {
 } from "@/lib/userAuth";
 import { getTransactionDetail } from "@/lib/pakasir";
 import { markOrderPaid } from "@/lib/orders";
+import { getVoucherBonusDays } from "@/lib/marketers";
 import { uploadPhoto, deletePhoto } from "@/lib/storage";
 
 /* ---------- Auth admin ---------- */
@@ -136,13 +137,32 @@ export async function createOrder(prev, formData) {
     total = account.price_per_hour * hours;
   }
 
+  // Kupon marketer (opsional): bonus masa aktif, harga tetap
+  const coupon = String(formData.get("coupon") || "").trim().toUpperCase();
+  let marketerId = null;
+  let couponCode = null;
+  let bonusHours = 0;
+
+  if (coupon) {
+    const { rows: mk } = await q(
+      "SELECT id FROM marketers WHERE upper(coupon_code) = $1 AND active",
+      [coupon]
+    );
+    if (!mk[0]) {
+      return { error: "Kode voucher tidak ditemukan atau sudah nonaktif. Hapus kodenya atau pakai kode lain." };
+    }
+    marketerId = mk[0].id;
+    couponCode = coupon;
+    bonusHours = (await getVoucherBonusDays()) * 24;
+  }
+
   const code = "RZ-" + crypto.randomBytes(3).toString("hex").toUpperCase();
 
   const userId = await getUserId();
   await q(
-    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel]
+    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours]
   );
 
   redirect(`/order/${code}`);
@@ -328,4 +348,90 @@ export async function deletePackage(packageId) {
   await guard();
   await q("DELETE FROM packages WHERE id = $1", [packageId]);
   revalidatePath("/admin/paket");
+}
+
+/* ---------- Marketer & kupon (sisi admin) ---------- */
+
+// Normalisasi kode kupon: kapital, hanya huruf/angka/strip
+function cleanCoupon(raw) {
+  return String(raw || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 24);
+}
+
+async function uniqueCoupon(base) {
+  let code = base;
+  // Kalau bentrok, tambah/acak sampai unik
+  for (let i = 0; i < 10; i++) {
+    const { rows } = await q("SELECT id FROM marketers WHERE upper(coupon_code) = $1", [code]);
+    if (!rows[0]) return code;
+    code = "MK" + crypto.randomBytes(3).toString("hex").toUpperCase();
+  }
+  return code;
+}
+
+export async function saveMarketer(prev, formData) {
+  await guard();
+
+  const id = Number(formData.get("id")) || null;
+  const name = String(formData.get("name") || "").trim();
+  const wa = String(formData.get("wa") || "").trim();
+  let coupon = cleanCoupon(formData.get("coupon_code"));
+
+  if (!name) {
+    return { error: "Nama marketer wajib diisi." };
+  }
+
+  if (id) {
+    // Edit: kupon kosong = pertahankan kupon lama
+    if (!coupon) {
+      const { rows } = await q("SELECT coupon_code FROM marketers WHERE id = $1", [id]);
+      coupon = rows[0]?.coupon_code;
+    }
+    const { rows: dup } = await q(
+      "SELECT id FROM marketers WHERE upper(coupon_code) = $1 AND id <> $2",
+      [coupon, id]
+    );
+    if (dup[0]) {
+      return { error: `Kode kupon ${coupon} sudah dipakai marketer lain.` };
+    }
+    await q("UPDATE marketers SET name = $1, wa = $2, coupon_code = $3 WHERE id = $4", [
+      name, wa, coupon, id,
+    ]);
+  } else {
+    if (!coupon) {
+      coupon = await uniqueCoupon("MK" + crypto.randomBytes(3).toString("hex").toUpperCase());
+    }
+    const { rows: dup } = await q("SELECT id FROM marketers WHERE upper(coupon_code) = $1", [coupon]);
+    if (dup[0]) {
+      return { error: `Kode kupon ${coupon} sudah dipakai marketer lain.` };
+    }
+    await q("INSERT INTO marketers (name, wa, coupon_code) VALUES ($1, $2, $3)", [name, wa, coupon]);
+  }
+
+  revalidatePath("/admin/marketer");
+  redirect("/admin/marketer");
+}
+
+export async function toggleMarketer(marketerId) {
+  await guard();
+  await q("UPDATE marketers SET active = NOT active WHERE id = $1", [marketerId]);
+  revalidatePath("/admin/marketer");
+}
+
+export async function deleteMarketer(marketerId) {
+  await guard();
+  // Order lama tetap menyimpan snapshot coupon_code (marketer_id jadi NULL)
+  await q("DELETE FROM marketers WHERE id = $1", [marketerId]);
+  revalidatePath("/admin/marketer");
+  revalidatePath("/admin");
+}
+
+export async function saveVoucherSettings(formData) {
+  await guard();
+  const days = Math.max(1, Math.min(365, Number(formData.get("bonus_days")) || 3));
+  await q(
+    `INSERT INTO settings (key, value) VALUES ('voucher_bonus_days', $1)
+     ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [String(days)]
+  );
+  revalidatePath("/admin/marketer");
 }

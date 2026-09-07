@@ -88,7 +88,14 @@ export default async function ProfilPage() {
                     <span className="text-soft text-xs">{tanggal(o.created_at)}</span>
                   </td>
                   <td className="p-4 text-text">{o.account_title}</td>
-                  <td className="p-4 text-text">{o.package_label ? `Paket ${o.package_label}` : `${o.hours} jam`}</td>
+                  <td className="p-4 text-text">
+                    {o.package_label ? `Paket ${o.package_label}` : `${o.hours} jam`}
+                    {o.bonus_hours > 0 && (
+                      <span className="block text-xs font-semibold text-ok mt-0.5">
+                        +{Math.round(o.bonus_hours / 24)} hari kupon {o.coupon_code}
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 font-bold text-text">{rp(o.total)}</td>
                   <td className="p-4">
                     <StatusBadge status={o.status} />

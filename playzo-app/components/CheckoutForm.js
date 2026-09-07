@@ -16,7 +16,7 @@ function durasiText(hours) {
   return `${hours} jam`;
 }
 
-export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "" }) {
+export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "", bonusDays = 3 }) {
   const [hours, setHours] = useState(3);
   const [mode, setMode] = useState("custom"); // "custom" atau string id paket
   const [state, formAction, pending] = useActionState(createOrder, null);
@@ -37,6 +37,19 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
       <label className={`${label} mb-5`}>
         <span className={span}>Nomor WhatsApp aktif</span>
         <input name="wa" required type="tel" defaultValue={defaultWa} placeholder="contoh: 081234567890" className={input} />
+      </label>
+
+      <label className={`${label} mb-5`}>
+        <span className={span}>Kode voucher marketer (opsional)</span>
+        <input
+          name="coupon"
+          placeholder="contoh: RAKA10"
+          className={`${input} uppercase`}
+          maxLength={24}
+        />
+        <span className="text-xs text-soft mt-1 block">
+          Punya kupon dari marketer? Masukkan di sini untuk bonus masa aktif sewa +{bonusDays} hari, gratis.
+        </span>
       </label>
 
       {!defaultName && (

@@ -3,16 +3,18 @@ import { notFound } from "next/navigation";
 import { q } from "@/lib/db";
 import { rp } from "@/lib/format";
 import { getCurrentUser } from "@/lib/userAuth";
+import { getVoucherBonusDays } from "@/lib/marketers";
 import CheckoutForm from "@/components/CheckoutForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function SewaPage({ params }) {
   const { id } = await params;
-  const [{ rows }, { rows: packages }, user] = await Promise.all([
+  const [{ rows }, { rows: packages }, user, bonusDays] = await Promise.all([
     q("SELECT id, title, rank, heroes, skins, price_per_hour, status FROM accounts WHERE id = $1", [Number(id) || 0]),
     q("SELECT id, label, duration_hours, price FROM packages ORDER BY duration_hours ASC"),
     getCurrentUser(),
+    getVoucherBonusDays(),
   ]);
   const account = rows[0];
   if (!account) notFound();
@@ -57,7 +59,7 @@ export default async function SewaPage({ params }) {
           </div>
         </div>
 
-        <CheckoutForm account={account} packages={packages} defaultName={user?.name} defaultWa={user?.wa} />
+        <CheckoutForm account={account} packages={packages} defaultName={user?.name} defaultWa={user?.wa} bonusDays={bonusDays} />
       </div>
     </div>
   );

@@ -22,7 +22,8 @@ export default async function AdminDashboard() {
         (SELECT count(*) FROM accounts WHERE status = 'rented') AS rented,
         (SELECT count(*) FROM orders WHERE status = 'pending') AS pending,
         (SELECT coalesce(sum(total), 0) FROM orders WHERE status IN ('paid', 'done')) AS revenue,
-        (SELECT count(*) FROM users) AS total_users
+        (SELECT count(*) FROM users) AS total_users,
+        (SELECT count(*) FROM marketers WHERE active) AS marketers
     `),
     q("SELECT * FROM orders ORDER BY created_at DESC LIMIT 50"),
   ]);
@@ -30,6 +31,7 @@ export default async function AdminDashboard() {
   const s = stats[0];
   const cards = [
     { label: "Total user terdaftar", value: s.total_users },
+    { label: "Marketer aktif", value: s.marketers },
     { label: "Akun siap sewa", value: s.ready },
     { label: "Akun sedang disewa", value: s.rented },
     { label: "Order menunggu bayar", value: s.pending },
@@ -49,6 +51,12 @@ export default async function AdminDashboard() {
             className="font-bold text-sm px-5 py-2.5 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
           >
             Kelola stok akun
+          </Link>
+          <Link
+            href="/admin/marketer"
+            className="font-bold text-sm px-5 py-2.5 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
+          >
+            Kelola marketer
           </Link>
           <Link
             href="/admin/paket"
@@ -106,6 +114,11 @@ export default async function AdminDashboard() {
                   <td className="p-4 text-text">{o.account_title}</td>
                   <td className="p-4 text-text">
                     {o.package_label ? `Paket ${o.package_label}` : `${o.hours} jam`}
+                    {o.bonus_hours > 0 && (
+                      <span className="block text-xs font-semibold text-ok mt-0.5">
+                        +{Math.round(o.bonus_hours / 24)} hari kupon {o.coupon_code}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 font-bold text-text">{rp(o.total)}</td>
                   <td className="p-4">
