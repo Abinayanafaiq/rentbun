@@ -55,7 +55,6 @@ export default function AccountCard({ account, t = dict.id.card }) {
           <span className="shrink-0 text-right">
             <small className="block text-[10px] text-faint">{t.from}</small>
             <strong className="block font-display text-base text-text">{rp(account.price_per_hour)}</strong>
-            <small className="text-[10px] text-faint">{t.perHour}</small>
           </span>
         </div>
 
