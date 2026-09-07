@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentMarketer } from "@/lib/marketerAuth";
-import { getVoucherBonusDays } from "@/lib/marketers";
+import { getVoucherBonusDays, getUsdRate } from "@/lib/marketers";
 import { q } from "@/lib/db";
 import { rp, usd, tanggal } from "@/lib/format";
 import { logoutMarketer, toggleCoupon, deleteCoupon } from "@/app/actions";
@@ -19,7 +19,7 @@ export default async function MarketerDashboard() {
   const [m, t, lang] = await Promise.all([getCurrentMarketer(), getDict(), getLang()]);
   if (!m) redirect("/marketer/login");
 
-  const [bonusDays, { rows: coupons }, { rows: orders }, { rows: commRows }] = await Promise.all([
+  const [bonusDays, { rows: coupons }, { rows: orders }, { rows: commRows }, usdRate] = await Promise.all([
     getVoucherBonusDays(),
     q(
       `SELECT c.*,
@@ -49,12 +49,9 @@ export default async function MarketerDashboard() {
   const totalUsed = coupons.reduce((sum, c) => sum + Number(c.used_count), 0);
   const totalCommissionIdr = Number(commRows[0]?.total_idr || 0);
   const totalCommissionUsd = Number(commRows[0]?.total_usd || 0);
-  const commissionValue = (
-    <span>
-      {rp(totalCommissionIdr)}
-      {totalCommissionUsd > 0 && <span className="block text-base font-bold text-ok">{usd(totalCommissionUsd)}</span>}
-    </span>
-  );
+  // USD dikonversi ke Rupiah (kurs tetap) lalu dijumlahkan ke total
+  const totalCommission = totalCommissionIdr + totalCommissionUsd * usdRate;
+  const commissionValue = rp(totalCommission);
   const cards = [
     { label: t.marketer.statActive, value: activeCoupons },
     { label: t.marketer.statUsed, value: `${totalUsed}x` },

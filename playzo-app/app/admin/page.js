@@ -21,7 +21,8 @@ export default async function AdminDashboard() {
         (SELECT count(*) FROM accounts WHERE status = 'ready') AS ready,
         (SELECT count(*) FROM accounts WHERE status = 'rented') AS rented,
         (SELECT count(*) FROM orders WHERE status = 'pending') AS pending,
-        (SELECT coalesce(sum(total), 0) FROM orders WHERE status IN ('paid', 'done')) AS revenue,
+        (SELECT coalesce(sum(o.total * CASE WHEN o.currency = 'USD' THEN coalesce((SELECT value::int FROM settings WHERE key = 'usd_rate'), 15000) ELSE 1 END), 0)
+         FROM orders o WHERE o.status IN ('paid', 'done')) AS revenue,
         (SELECT count(*) FROM users) AS total_users,
         (SELECT count(*) FROM marketers WHERE active) AS marketers
     `),
