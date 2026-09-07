@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentMarketer } from "@/lib/marketerAuth";
 import { getVoucherBonusDays } from "@/lib/marketers";
 import { q } from "@/lib/db";
-import { tanggal } from "@/lib/format";
+import { rp, tanggal } from "@/lib/format";
 import { logoutMarketer, toggleCoupon, deleteCoupon } from "@/app/actions";
 import { getDict, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
@@ -19,7 +19,7 @@ export default async function MarketerDashboard() {
   const [m, t, lang] = await Promise.all([getCurrentMarketer(), getDict(), getLang()]);
   if (!m) redirect("/marketer/login");
 
-  const [bonusDays, { rows: coupons }, { rows: orders }] = await Promise.all([
+  const [bonusDays, { rows: coupons }, { rows: orders }, { rows: commRows }] = await Promise.all([
     getVoucherBonusDays(),
     q(
       `SELECT c.*,
@@ -35,14 +35,22 @@ export default async function MarketerDashboard() {
       "SELECT * FROM orders WHERE marketer_id = $1 ORDER BY created_at DESC LIMIT 50",
       [m.id]
     ),
+    q(
+      `SELECT coalesce(sum(commission), 0) AS total
+       FROM orders
+       WHERE marketer_id = $1 AND status IN ('paid', 'done')`,
+      [m.id]
+    ),
   ]);
 
   const activeCoupons = coupons.filter((c) => c.active).length;
   const totalUsed = coupons.reduce((sum, c) => sum + Number(c.used_count), 0);
+  const totalCommission = Number(commRows[0]?.total || 0);
   const cards = [
     { label: t.marketer.statActive, value: activeCoupons },
     { label: t.marketer.statUsed, value: `${totalUsed}x` },
     { label: t.marketer.statBonus, value: fill(t.marketer.bonusDaysValue, { days: bonusDays }) },
+    { label: t.marketer.statCommission, value: rp(totalCommission) },
   ];
 
   return (
@@ -60,7 +68,7 @@ export default async function MarketerDashboard() {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-11">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-11">
         {cards.map((c) => (
           <div key={c.label} className="bg-surface border border-line rounded-lg p-5">
             <p className="text-sm font-semibold text-soft">{c.label}</p>
@@ -135,6 +143,7 @@ export default async function MarketerDashboard() {
                 <th className="p-4 font-display">{t.marketer.thAccount}</th>
                 <th className="p-4 font-display">{t.marketer.thCoupon}</th>
                 <th className="p-4 font-display">{t.marketer.thBonus}</th>
+                <th className="p-4 font-display">{t.marketer.thCommission}</th>
                 <th className="p-4 font-display">{t.marketer.thStatus}</th>
               </tr>
             </thead>
@@ -150,6 +159,10 @@ export default async function MarketerDashboard() {
                     <span className="font-mono font-bold text-text">{o.coupon_code}</span>
                   </td>
                   <td className="p-4 text-ok font-semibold">{fill(t.marketer.bonusDaysValue, { days: Math.round(o.bonus_hours / 24) })}</td>
+                  <td className="p-4 font-semibold text-text">
+                    {o.commission > 0 ? rp(o.commission) : "-"}
+                    {o.status === "pending" && <span className="block text-[10px] font-normal text-faint">estimasi</span>}
+                  </td>
                   <td className="p-4">
                     <StatusBadge status={o.status} lang={lang} />
                   </td>

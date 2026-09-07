@@ -43,6 +43,22 @@ export default function PackageForm({ pkg }) {
         </label>
       </div>
 
+      <label className={`${label} mb-6`}>
+        <span className={span}>Komisi marketer untuk paket ini (%)</span>
+        <input
+          name="commission_rate"
+          type="number"
+          min="0"
+          max="100"
+          defaultValue={p.commission_rate ?? 0}
+          placeholder="contoh: 10"
+          className={input}
+        />
+        <span className="text-xs text-soft mt-1 block">
+          Persen dari harga paket yang menjadi pendapatan marketer saat pembeli pakai kuponnya. Kosongkan / 0 untuk tanpa komisi.
+        </span>
+      </label>
+
       <button type="submit" className={btnPrimary}>
         {p.id ? "Simpan perubahan" : "Tambah paket"}
       </button>

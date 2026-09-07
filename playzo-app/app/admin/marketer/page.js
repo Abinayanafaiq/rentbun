@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
-import { tanggal } from "@/lib/format";
-import { getVoucherBonusDays } from "@/lib/marketers";
-import { saveVoucherSettings, toggleMarketer, deleteMarketer } from "@/app/actions";
+import { rp, tanggal } from "@/lib/format";
+import { getVoucherBonusDays, getCommissionRate } from "@/lib/marketers";
+import { saveVoucherSettings, saveCommissionSettings, toggleMarketer, deleteMarketer } from "@/app/actions";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { input } from "@/components/ui";
 
@@ -16,18 +16,20 @@ const BTN = "text-xs font-bold px-3.5 py-1.5 rounded-md border border-line trans
 export default async function AdminMarketer() {
   if (!(await isAdmin())) redirect("/admin/login");
 
-  const [{ rows: marketers }, bonusDays] = await Promise.all([
+  const [{ rows: marketers }, bonusDays, commissionRate] = await Promise.all([
     q(`
       SELECT m.*,
         (SELECT string_agg(c.code, ', ' ORDER BY c.id) FROM coupons c WHERE c.marketer_id = m.id AND c.active) AS coupon_codes,
         count(o.id) FILTER (WHERE o.status IN ('paid', 'done')) AS used_count,
-        coalesce(sum(o.bonus_hours) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS bonus_given
+        coalesce(sum(o.bonus_hours) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS bonus_given,
+        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS commission_earned
       FROM marketers m
       LEFT JOIN orders o ON o.marketer_id = m.id
       GROUP BY m.id
       ORDER BY m.id ASC
     `),
     getVoucherBonusDays(),
+    getCommissionRate(),
   ]);
 
   return (
@@ -74,6 +76,31 @@ export default async function AdminMarketer() {
         </form>
       </div>
 
+      {/* Pengaturan komisi marketer */}
+      <div className="bg-surface border border-line rounded-lg p-5 mb-8">
+        <h2 className="font-display font-bold text-lg text-text mb-1">Komisi marketer (sewa per jam)</h2>
+        <p className="text-sm text-soft mb-4">
+          Komisi untuk order yang memakai kupon marketer. Nilai ini dipakai untuk sewa per jam dan menjadi default.
+          Untuk paket sewa, rate diatur per paket di halaman Kelola paket sewa.
+        </p>
+        <form action={saveCommissionSettings} className="flex flex-wrap items-end gap-3">
+          <label className="block">
+            <span className="font-semibold text-sm">Rate komisi (%)</span>
+            <input
+              name="commission_rate"
+              type="number"
+              min="0"
+              max="100"
+              defaultValue={commissionRate}
+              className={`${input} w-36`}
+            />
+          </label>
+          <button className="font-bold text-sm px-5 py-2.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors">
+            Simpan rate komisi
+          </button>
+        </form>
+      </div>
+
       {marketers.length === 0 ? (
         <p className="text-soft">Belum ada marketer. Rekrut marketer pertamamu.</p>
       ) : (
@@ -85,6 +112,7 @@ export default async function AdminMarketer() {
                 <th className="p-4 font-display">Kode kupon</th>
                 <th className="p-4 font-display">Kupon terpakai</th>
                 <th className="p-4 font-display">Bonus diberikan</th>
+                <th className="p-4 font-display">Komisi</th>
                 <th className="p-4 font-display">Status</th>
                 <th className="p-4 font-display">Aksi</th>
               </tr>
@@ -109,6 +137,7 @@ export default async function AdminMarketer() {
                   <td className="p-4 text-text">
                     {m.bonus_given > 0 ? `${Math.round(m.bonus_given / 24)} hari` : "-"}
                   </td>
+                  <td className="p-4 font-semibold text-text">{rp(m.commission_earned)}</td>
                   <td className="p-4">
                     <span
                       className={`inline-flex text-xs font-bold px-2.5 py-1 rounded border whitespace-nowrap ${

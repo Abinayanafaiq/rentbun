@@ -21,7 +21,13 @@ import {
   paymentLabel,
 } from "@/lib/oxapay";
 import { markOrderPaid } from "@/lib/orders";
-import { getVoucherBonusDays, cleanCoupon, generateCoupon, couponExists } from "@/lib/marketers";
+import {
+  getVoucherBonusDays,
+  getCommissionRate,
+  cleanCoupon,
+  generateCoupon,
+  couponExists,
+} from "@/lib/marketers";
 import { getDict } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
 import {
@@ -149,6 +155,7 @@ export async function createOrder(prev, formData) {
   }
 
   let hours, total, packageLabel = null;
+  let packageCommissionRate = 0;
 
   if (packageId > 0) {
     // Paket: harga & durasi selalu diambil dari database, jangan percaya client
@@ -160,6 +167,7 @@ export async function createOrder(prev, formData) {
     hours = pkg.duration_hours;
     total = pkg.price;
     packageLabel = pkg.label;
+    packageCommissionRate = pkg.commission_rate || 0;
   } else {
     hours = Math.max(1, Math.min(72, Number(formData.get("hours")) || 1));
     total = account.price_per_hour * hours;
@@ -170,6 +178,7 @@ export async function createOrder(prev, formData) {
   let marketerId = null;
   let couponCode = null;
   let bonusHours = 0;
+  let commission = 0;
 
   if (coupon) {
     const { rows: mk } = await q(
@@ -184,15 +193,19 @@ export async function createOrder(prev, formData) {
     marketerId = mk[0].marketer_id;
     couponCode = coupon;
     bonusHours = (await getVoucherBonusDays()) * 24;
+    // Komisi marketer: paket pakai rate paket, per jam pakai rate global
+    commission = packageId > 0
+      ? Math.round((total * packageCommissionRate) / 100)
+      : Math.round((total * (await getCommissionRate())) / 100);
   }
 
   const code = "RZ-" + crypto.randomBytes(3).toString("hex").toUpperCase();
 
   const userId = await getUserId();
   await q(
-    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours]
+    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours, commission)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours, commission]
   );
 
   redirect(`/order/${code}`);
@@ -382,18 +395,19 @@ export async function savePackage(formData) {
   const label = String(formData.get("label") || "").trim();
   const durationHours = Math.max(1, Math.min(720, Number(formData.get("duration_hours")) || 0));
   const price = Math.max(0, Number(formData.get("price")) || 0);
+  const commissionRate = Math.max(0, Math.min(100, Number(formData.get("commission_rate")) || 0));
 
   if (!label || !durationHours || !price) {
     redirect(id ? `/admin/paket/${id}` : "/admin/paket/baru");
   }
 
   if (id) {
-    await q("UPDATE packages SET label = $1, duration_hours = $2, price = $3 WHERE id = $4", [
-      label, durationHours, price, id,
+    await q("UPDATE packages SET label = $1, duration_hours = $2, price = $3, commission_rate = $4 WHERE id = $5", [
+      label, durationHours, price, commissionRate, id,
     ]);
   } else {
-    await q("INSERT INTO packages (label, duration_hours, price) VALUES ($1, $2, $3)", [
-      label, durationHours, price,
+    await q("INSERT INTO packages (label, duration_hours, price, commission_rate) VALUES ($1, $2, $3, $4)", [
+      label, durationHours, price, commissionRate,
     ]);
   }
 
@@ -482,6 +496,17 @@ export async function saveVoucherSettings(formData) {
     `INSERT INTO settings (key, value) VALUES ('voucher_bonus_days', $1)
      ON CONFLICT (key) DO UPDATE SET value = $1`,
     [String(days)]
+  );
+  revalidatePath("/admin/marketer");
+}
+
+export async function saveCommissionSettings(formData) {
+  await guard();
+  const rate = Math.max(0, Math.min(100, Number(formData.get("commission_rate")) || 0));
+  await q(
+    `INSERT INTO settings (key, value) VALUES ('coupon_commission_rate', $1)
+     ON CONFLICT (key) DO UPDATE SET value = $1`,
+    [String(rate)]
   );
   revalidatePath("/admin/marketer");
 }

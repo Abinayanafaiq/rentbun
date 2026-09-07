@@ -52,6 +52,9 @@ export default async function AdminPaket() {
               <p className="font-display font-extrabold text-2xl text-text">{p.label}</p>
               <p className="text-sm text-soft">{durasiText(p.duration_hours)} ({p.duration_hours} jam)</p>
               <p className="font-display font-extrabold text-3xl mt-3 mb-5 text-text">{rp(p.price)}</p>
+              <p className="text-xs font-semibold text-soft mb-4">
+                Komisi marketer: <span className="text-text">{p.commission_rate > 0 ? `${p.commission_rate}%` : "Tanpa komisi"}</span>
+              </p>
               <div className="flex gap-2 mt-auto">
                 <Link
                   href={`/admin/paket/${p.id}`}

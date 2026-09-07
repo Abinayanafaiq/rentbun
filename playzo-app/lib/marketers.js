@@ -10,6 +10,21 @@ export async function getVoucherBonusDays() {
   return Math.min(Math.floor(n), 365);
 }
 
+// Rate komisi global (%) untuk sewa per jam (paket punya rate sendiri).
+// Admin ubah lewat /admin/marketer. Default 5%.
+export async function getCommissionRate() {
+  const { rows } = await q("SELECT value FROM settings WHERE key = 'coupon_commission_rate'");
+  const n = Number(rows[0]?.value);
+  if (!Number.isFinite(n) || n < 0) return 5;
+  return Math.min(Math.floor(n), 100);
+}
+
+// Komisi rupiah dari total order: paket pakai rate paket, per jam pakai rate global.
+export async function commissionForOrder(order, packageCommissionRate = null) {
+  const rate = packageCommissionRate ?? (await getCommissionRate());
+  return Math.round((order.total * rate) / 100);
+}
+
 // Normalisasi kode kupon: kapital, hanya huruf/angka/strip, maks 24 karakter
 export function cleanCoupon(raw) {
   return String(raw || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 24);

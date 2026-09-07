@@ -264,6 +264,7 @@ export const dict = {
       statUsed: "Total pemakaian kupon",
       statBonus: "Bonus per pemakaian",
       bonusDaysValue: "+{days} hari",
+      statCommission: "Komisi saya",
       createTitle: "Buat kode kupon baru",
       createDesc:
         "Setiap penyewa yang memasukkan kodemu saat checkout dapat bonus masa aktif sewa +{days} hari, gratis. Bagikan kodenya di konten, status WA, atau ke teman langsung.",
@@ -287,6 +288,7 @@ export const dict = {
       thCoupon: "Kupon",
       thBonus: "Bonus",
       thStatus: "Status",
+      thCommission: "Komisi",
     },
     status: {
       ready: "LIVE · Tersedia",
@@ -574,6 +576,7 @@ export const dict = {
       statUsed: "Total coupon usage",
       statBonus: "Bonus per use",
       bonusDaysValue: "+{days} days",
+      statCommission: "My commission",
       createTitle: "Create a new coupon code",
       createDesc:
         "Every renter who enters your code at checkout gets a free +{days}-day rental extension. Share your code in content, WA status, or directly to friends.",
@@ -597,6 +600,7 @@ export const dict = {
       thCoupon: "Coupon",
       thBonus: "Bonus",
       thStatus: "Status",
+      thCommission: "Commission",
     },
     status: {
       ready: "LIVE · Available",
