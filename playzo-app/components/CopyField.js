@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function CopyField({ label, value }) {
+export default function CopyField({ label, value, copyLabel = "Salin", copiedLabel = "Tersalin" }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -26,7 +26,7 @@ export default function CopyField({ label, value }) {
         onClick={copy}
         className="shrink-0 text-sm font-bold px-3.5 py-1.5 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
       >
-        {copied ? "Tersalin" : "Salin"}
+        {copied ? copiedLabel : copyLabel}
       </button>
     </div>
   );

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { rp } from "@/lib/format";
+import { dict, fill } from "@/lib/dict";
 
-export default function AccountCard({ account }) {
+export default function AccountCard({ account, t = dict.id.card }) {
   const ready = account.status === "ready";
 
   return (
@@ -9,7 +10,7 @@ export default function AccountCard({ account }) {
       <Link
         href={`/akun/${account.id}`}
         className="rental-card-cover relative block aspect-video overflow-hidden bg-surface2"
-        aria-label={`Lihat detail ${account.title}`}
+        aria-label={fill(t.viewDetail, { title: account.title })}
       >
         {account.coverUrl ? (
           <img
@@ -33,7 +34,7 @@ export default function AccountCard({ account }) {
           }`}
         >
           {ready && <span className="w-1.5 h-1.5 rounded-full bg-onaccent animate-pulse" aria-hidden="true" />}
-          {ready ? "Tersedia" : "Sedang disewa"}
+          {ready ? t.available : t.rented}
         </span>
         <span className="absolute top-3 right-3 rounded-full border border-white/15 bg-bg/75 px-2.5 py-1 text-[10px] font-bold text-text backdrop-blur-md">
           {account.rank}
@@ -49,32 +50,32 @@ export default function AccountCard({ account }) {
             >
               {account.title}
             </Link>
-            <p className="mt-1 text-xs text-faint">Rental akun Mobile Legends</p>
+            <p className="mt-1 text-xs text-faint">{t.subtitle}</p>
           </div>
           <span className="shrink-0 text-right">
-            <small className="block text-[10px] text-faint">Mulai dari</small>
+            <small className="block text-[10px] text-faint">{t.from}</small>
             <strong className="block font-display text-base text-text">{rp(account.price_per_hour)}</strong>
-            <small className="text-[10px] text-faint">per jam</small>
+            <small className="text-[10px] text-faint">{t.perHour}</small>
           </span>
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-soft">
             <span className="rental-stat-icon" aria-hidden="true">+</span>
-            <span>{account.heroes} hero</span>
+            <span>{fill(t.heroes, { n: account.heroes })}</span>
             <span className="text-line2">/</span>
-            <span>{account.skins} skin</span>
+            <span>{fill(t.skins, { n: account.skins })}</span>
           </div>
           {ready ? (
             <Link
               href={`/sewa/${account.id}`}
               className="shrink-0 font-bold text-xs px-4 py-2.5 rounded-lg bg-accent text-onaccent hover:bg-accent2 transition-colors"
             >
-              Sewa
+              {t.rent}
             </Link>
           ) : (
             <span className="shrink-0 font-bold text-xs px-4 py-2.5 rounded-lg bg-surface2 text-faint cursor-not-allowed">
-              Disewa
+              {t.rentedBtn}
             </span>
           )}
         </div>

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { WA_DISPLAY } from "@/lib/site";
+import { getDict } from "@/lib/i18n";
 import { photoUrl } from "@/lib/storage";
 
 export default async function SiteFooter() {
-  const logoUrl = await photoUrl("branding/rentzo-logo.png");
+  const [t, logoUrl] = await Promise.all([getDict(), photoUrl("branding/rentzo-logo.png")]);
 
   return (
     <footer className="bg-surface/80 border-t border-line mt-0">
@@ -14,11 +15,11 @@ export default async function SiteFooter() {
               <img src={logoUrl} alt="Rentzo" className="brand-logo brand-logo-footer" />
             </div>
             <p className="mt-2.5 text-soft max-w-[32ch] text-sm">
-              Rental akun Mobile Legends online. Buka 24 jam, setiap hari.
+              {t.footer.tagline}
             </p>
           </div>
           <div>
-            <p className="font-bold text-sm mb-2 text-text">Kontak</p>
+            <p className="font-bold text-sm mb-2 text-text">{t.footer.contact}</p>
             <p className="text-soft text-sm">
               WhatsApp: {WA_DISPLAY}
               <br />
@@ -28,7 +29,7 @@ export default async function SiteFooter() {
         </div>
         <div className="border-t border-line pt-5 flex flex-wrap justify-between gap-2.5 text-xs text-faint">
           <p className="max-w-[70ch]">
-            Rentzo tidak berafiliasi dengan Moonton. Mobile Legends dan seluruh merek terkait milik pemiliknya masing-masing.
+            {t.footer.disclaimer}
           </p>
           <p>
             © 2026 Rentzo · <Link href="/marketer/login" className="underline underline-offset-2 hover:text-soft">Marketer</Link> · <Link href="/admin/login" className="underline underline-offset-2 hover:text-soft">Admin</Link>

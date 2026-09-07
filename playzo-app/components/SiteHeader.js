@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/userAuth";
+import { getDict, getLang } from "@/lib/i18n";
 import { photoUrl } from "@/lib/storage";
+import LangToggle from "@/components/LangToggle";
 
 export default async function SiteHeader() {
-  const user = await getCurrentUser();
+  const [user, t, lang] = await Promise.all([getCurrentUser(), getDict(), getLang()]);
   const logoUrl = await photoUrl("branding/rentzo-logo.png");
 
   return (
@@ -19,17 +21,18 @@ export default async function SiteHeader() {
             href="/#katalog"
             className="px-3 py-2 rounded-full text-soft hover:text-text hover:bg-surface2 transition-colors"
           >
-            Katalog
+            {t.header.catalog}
           </Link>
           <Link
             href="/#cara"
             className="px-3 py-2 rounded-full text-soft hover:text-text hover:bg-surface2 transition-colors"
           >
-            Cara Sewa
+            {t.header.howTo}
           </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <LangToggle lang={lang} />
           {user ? (
             <Link
               href="/profil"
@@ -45,14 +48,14 @@ export default async function SiteHeader() {
               href="/masuk"
               className="px-3 py-1.5 rounded-full text-sm font-semibold text-soft hover:text-text hover:bg-surface2 transition-colors"
             >
-              Masuk
+              {t.header.login}
             </Link>
           )}
           <Link
             href="/#katalog"
             className="inline-flex items-center font-bold text-sm px-4 py-2 rounded-full bg-text text-bg hover:bg-accent transition-colors"
           >
-              <span className="sm:hidden">Sewa</span><span className="hidden sm:inline">Sewa sekarang</span>
+              <span className="sm:hidden">{t.header.rent}</span><span className="hidden sm:inline">{t.header.rentNow}</span>
           </Link>
         </div>
       </div>

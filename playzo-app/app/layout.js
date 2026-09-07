@@ -2,6 +2,7 @@ import { Inter, Archivo } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { getLang } from "@/lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,9 +22,10 @@ export const metadata = {
     "Sewa akun Mobile Legends full skin dan rank tinggi mulai Rp1.500 per jam. Pilih akun, chat admin, langsung main.",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const lang = await getLang();
   return (
-    <html lang="id" className={`${inter.variable} ${archivo.variable}`}>
+    <html lang={lang} className={`${inter.variable} ${archivo.variable}`}>
       <body className="font-body bg-bg text-text antialiased min-h-screen flex flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>

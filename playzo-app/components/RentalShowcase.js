@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { rp } from "@/lib/format";
+import { dict, fill } from "@/lib/dict";
 
-export default function RentalShowcase({ accounts }) {
+export default function RentalShowcase({ accounts, t = dict.id.showcase }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function RentalShowcase({ accounts }) {
   const ready = active.status === "ready";
 
   return (
-    <section className="rental-showcase" aria-label="Pilihan akun rental">
+    <section className="rental-showcase" aria-label={t.aria}>
       <div className="showcase-feature">
         {active.coverUrl ? (
           <img className="showcase-image" src={active.coverUrl} alt="" />
@@ -32,19 +33,19 @@ export default function RentalShowcase({ accounts }) {
         )}
         <span className="showcase-shade" aria-hidden="true" />
         <div className="showcase-content">
-          <p className="showcase-kicker"><span /> {ready ? "AKUN TERSEDIA SEKARANG" : "AKUN SEDANG DISEWA"}</p>
+          <p className="showcase-kicker"><span /> {ready ? t.kickerReady : t.kickerRented}</p>
           <h2>{active.title}</h2>
           <p className="showcase-description">
-            Rank {active.rank || "tinggi"} dengan {active.heroes} hero dan {active.skins} skin. Siap dipakai untuk push rank dan mabar.
+            {fill(t.desc, { rank: active.rank || t.rankFallback, heroes: active.heroes, skins: active.skins })}
           </p>
-          <p className="showcase-price">{rp(active.price_per_hour)} <small>/ jam</small></p>
+          <p className="showcase-price">{rp(active.price_per_hour)} <small>{t.perHour}</small></p>
           <div className="showcase-actions">
             {ready ? (
-              <Link href={`/sewa/${active.id}`} className="showcase-buy">Sewa akun</Link>
+              <Link href={`/sewa/${active.id}`} className="showcase-buy">{t.rent}</Link>
             ) : (
-              <Link href={`/akun/${active.id}`} className="showcase-buy">Lihat detail</Link>
+              <Link href={`/akun/${active.id}`} className="showcase-buy">{t.detail}</Link>
             )}
-            <Link href={`/akun/${active.id}`} className="showcase-icon-button" aria-label={`Lihat ${active.title}`}>↗</Link>
+            <Link href={`/akun/${active.id}`} className="showcase-icon-button" aria-label={fill(t.showAccount, { title: active.title })}>↗</Link>
           </div>
         </div>
         <div className="showcase-progress" aria-hidden="true">
@@ -61,14 +62,14 @@ export default function RentalShowcase({ accounts }) {
             key={account.id}
             className={`showcase-list-item ${index === activeIndex ? "is-active" : ""}`}
             onClick={() => setActiveIndex(index)}
-            aria-label={`Tampilkan ${account.title}`}
+            aria-label={fill(t.showAccount, { title: account.title })}
           >
             <span className="showcase-thumb">
               {account.coverUrl ? <img src={account.coverUrl} alt="" /> : "ML"}
             </span>
             <span className="showcase-list-copy">
               <strong>{account.title}</strong>
-              <small>{account.status === "ready" ? "Tersedia" : "Sedang disewa"} · {rp(account.price_per_hour)}/jam</small>
+              <small>{account.status === "ready" ? t.available : t.rented} · {rp(account.price_per_hour)}{t.perHourShort}</small>
             </span>
           </button>
         ))}

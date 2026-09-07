@@ -1,3 +1,5 @@
+import { dict } from "@/lib/dict";
+
 const STYLES = {
   // status akun
   ready: "bg-livebg text-live border-live/60",
@@ -10,17 +12,8 @@ const STYLES = {
   cancelled: "bg-surface2 text-faint border-line2",
 };
 
-const LABELS = {
-  ready: "LIVE · Tersedia",
-  rented: "Sedang disewa",
-  maintenance: "Perawatan",
-  pending: "Menunggu pembayaran",
-  paid: "Lunas",
-  done: "Selesai",
-  cancelled: "Dibatalkan",
-};
-
-export default function StatusBadge({ status, className = "" }) {
+export default function StatusBadge({ status, lang = "id", className = "" }) {
+  const labels = dict[lang]?.status || dict.id.status;
   return (
     <span
       className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded border whitespace-nowrap ${STYLES[status] || STYLES.pending} ${className}`}
@@ -28,7 +21,7 @@ export default function StatusBadge({ status, className = "" }) {
       {status === "ready" && (
         <span className="w-1.5 h-1.5 rounded-full bg-live animate-pulse" aria-hidden="true" />
       )}
-      {LABELS[status] || status}
+      {labels[status] || status}
     </span>
   );
 }

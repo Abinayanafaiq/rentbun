@@ -4,22 +4,23 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { createOrder } from "@/app/actions";
 import { card, input, span, label, btnPrimary } from "@/components/ui";
+import { dict, fill } from "@/lib/dict";
 
 const rp = (n) => "Rp" + Number(n || 0).toLocaleString("id-ID");
 
-function durasiText(hours) {
-  if (hours % 24 === 0) {
-    const days = hours / 24;
-    if (days % 7 === 0) return `${days / 7} minggu`;
-    return `${days} hari`;
-  }
-  return `${hours} jam`;
-}
-
-export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "", bonusDays = 3 }) {
+export default function CheckoutForm({ account, packages = [], defaultName = "", defaultWa = "", bonusDays = 3, t = dict.id.checkout }) {
   const [hours, setHours] = useState(3);
   const [mode, setMode] = useState("custom"); // "custom" atau string id paket
   const [state, formAction, pending] = useActionState(createOrder, null);
+
+  function durasiText(h) {
+    if (h % 24 === 0) {
+      const days = h / 24;
+      if (days % 7 === 0) return fill(t.weeks, { n: days / 7 });
+      return fill(t.days, { n: days });
+    }
+    return fill(t.hours, { n: h });
+  }
 
   const selectedPkg = packages.find((p) => String(p.id) === mode);
   const total = selectedPkg ? selectedPkg.price : account.price_per_hour * hours;
@@ -30,39 +31,39 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
       <input type="hidden" name="package_id" value={selectedPkg ? selectedPkg.id : 0} />
 
       <label className={`${label} mb-4`}>
-        <span className={span}>Nama kamu</span>
-        <input name="name" required defaultValue={defaultName} placeholder="contoh: Raka" className={input} />
+        <span className={span}>{t.name}</span>
+        <input name="name" required defaultValue={defaultName} placeholder={t.namePh} className={input} />
       </label>
 
       <label className={`${label} mb-5`}>
-        <span className={span}>Nomor WhatsApp aktif</span>
-        <input name="wa" required type="tel" defaultValue={defaultWa} placeholder="contoh: 081234567890" className={input} />
+        <span className={span}>{t.wa}</span>
+        <input name="wa" required type="tel" defaultValue={defaultWa} placeholder={t.waPh} className={input} />
       </label>
 
       <label className={`${label} mb-5`}>
-        <span className={span}>Kode voucher marketer (opsional)</span>
+        <span className={span}>{t.voucher}</span>
         <input
           name="coupon"
-          placeholder="contoh: RAKA10"
+          placeholder={t.voucherPh}
           className={`${input} uppercase`}
           maxLength={24}
         />
         <span className="text-xs text-soft mt-1 block">
-          Punya kupon dari marketer? Masukkan di sini untuk bonus masa aktif sewa +{bonusDays} hari, gratis.
+          {fill(t.voucherHint, { days: bonusDays })}
         </span>
       </label>
 
       {!defaultName && (
         <p className="text-xs text-soft mb-5">
-          Belum punya akun?{" "}
+          {t.noAccount}{" "}
           <Link href="/daftar" className="font-bold text-accent hover:text-accent2 underline underline-offset-2">
-            Daftar
+            {t.register}
           </Link>{" "}
-          agar order tersimpan di profilmu.
+          {t.noAccountTail}
         </p>
       )}
 
-      <p className="font-semibold text-sm mb-2">Pilih durasi sewa</p>
+      <p className="font-semibold text-sm mb-2">{t.duration}</p>
       <div className="space-y-2.5 mb-5">
         {/* Opsi per jam */}
         <label
@@ -77,8 +78,8 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
             onChange={() => setMode("custom")}
             className="w-4 h-4 accent-[#9146FF]"
           />
-          <span className="font-semibold flex-1">Per jam</span>
-          <span className="text-sm text-soft">{rp(account.price_per_hour)}/jam</span>
+          <span className="font-semibold flex-1">{t.perHour}</span>
+          <span className="text-sm text-soft">{rp(account.price_per_hour)}{t.perHourUnit}</span>
         </label>
 
         {mode === "custom" && (
@@ -91,9 +92,9 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
               value={hours}
               onChange={(e) => setHours(Math.max(1, Math.min(72, Number(e.target.value) || 1)))}
               className={input}
-              aria-label="Durasi sewa dalam jam"
+              aria-label={t.hoursAria}
             />
-            <p className="text-xs text-soft mt-1.5">Minimal 1 jam, maksimal 72 jam.</p>
+            <p className="text-xs text-soft mt-1.5">{t.hoursHint}</p>
           </div>
         )}
         {mode !== "custom" && <input type="hidden" name="hours" value={selectedPkg.duration_hours} />}
@@ -116,13 +117,13 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
                 className="w-4 h-4 accent-[#9146FF]"
               />
               <span className="font-semibold flex-1">
-                Paket {p.label}
+                {fill(t.package, { label: p.label })}
                 <span className="block text-xs font-medium text-soft">{durasiText(p.duration_hours)}</span>
               </span>
               <span className="text-right">
                 <span className="font-bold block">{rp(p.price)}</span>
                 {hemat > 0 && (
-                  <span className="text-xs font-semibold text-ok">hemat {rp(hemat)}</span>
+                  <span className="text-xs font-semibold text-ok">{fill(t.save, { amount: rp(hemat) })}</span>
                 )}
               </span>
             </label>
@@ -131,7 +132,7 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
       </div>
 
       <div className="flex items-center justify-between border-t border-line pt-4 mt-2 mb-5">
-        <span className="font-semibold">Total bayar</span>
+        <span className="font-semibold">{t.total}</span>
         <span className="font-display font-extrabold text-3xl text-text">{rp(total)}</span>
       </div>
 
@@ -142,7 +143,7 @@ export default function CheckoutForm({ account, packages = [], defaultName = "",
       )}
 
       <button type="submit" disabled={pending} className={btnPrimary}>
-        {pending ? "Membuat order..." : "Buat order"}
+        {pending ? t.submitting : t.submit}
       </button>
     </form>
   );

@@ -13,15 +13,35 @@ import {
   clearUserSession,
   getUserId,
 } from "@/lib/userAuth";
-import { getTransactionDetail } from "@/lib/pakasir";
+import {
+  oxapayEnabled,
+  createInvoice,
+  getPaymentInfo,
+  isPaid,
+  paymentLabel,
+} from "@/lib/oxapay";
 import { markOrderPaid } from "@/lib/orders";
 import { getVoucherBonusDays, cleanCoupon, generateCoupon, couponExists } from "@/lib/marketers";
+import { getDict } from "@/lib/i18n";
+import { fill } from "@/lib/dict";
 import {
   setMarketerSession,
   clearMarketerSession,
   getCurrentMarketer,
 } from "@/lib/marketerAuth";
 import { uploadPhoto, deletePhoto } from "@/lib/storage";
+
+/* ---------- Bahasa (ID/EN) ---------- */
+
+export async function setLang(lang) {
+  const store = await cookies();
+  store.set("pz_lang", lang === "en" ? "en" : "id", {
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365, // 1 tahun
+  });
+  revalidatePath("/", "layout");
+}
 
 /* ---------- Auth admin ---------- */
 
@@ -49,6 +69,7 @@ export async function logout() {
 /* ---------- Auth pengguna (daftar / masuk) ---------- */
 
 export async function registerUser(prev, formData) {
+  const t = await getDict();
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const wa = String(formData.get("wa") || "").trim();
@@ -56,21 +77,21 @@ export async function registerUser(prev, formData) {
   const confirm = String(formData.get("confirm") || "");
 
   if (!name || !email || !password) {
-    return { error: "Nama, email, dan password wajib diisi." };
+    return { error: t.errors.regRequired };
   }
   if (!/^\S+@\S+\.\S+$/.test(email)) {
-    return { error: "Format email tidak valid." };
+    return { error: t.errors.emailInvalid };
   }
   if (password.length < 6) {
-    return { error: "Password minimal 6 karakter." };
+    return { error: t.errors.passMin };
   }
   if (password !== confirm) {
-    return { error: "Konfirmasi password tidak cocok." };
+    return { error: t.errors.passMismatch };
   }
 
   const { rows: dup } = await q("SELECT id FROM users WHERE email = $1", [email]);
   if (dup[0]) {
-    return { error: "Email sudah terdaftar. Silakan masuk." };
+    return { error: t.errors.emailTaken };
   }
 
   const { rows } = await q(
@@ -82,17 +103,18 @@ export async function registerUser(prev, formData) {
 }
 
 export async function loginUser(prev, formData) {
+  const t = await getDict();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
-    return { error: "Email dan password wajib diisi." };
+    return { error: t.errors.loginRequired };
   }
 
   const { rows } = await q("SELECT id, password_hash FROM users WHERE email = $1", [email]);
   const user = rows[0];
   if (!user || !verifyPassword(password, user.password_hash)) {
-    return { error: "Email atau password salah." };
+    return { error: t.errors.loginFailed };
   }
   await setUserSession(user.id);
   redirect("/profil");
@@ -110,19 +132,20 @@ async function guard() {
 /* ---------- Order (sisi pembeli) ---------- */
 
 export async function createOrder(prev, formData) {
+  const t = await getDict();
   const accountId = Number(formData.get("account_id")) || 0;
   const packageId = Number(formData.get("package_id")) || 0;
   let name = String(formData.get("name") || "").trim();
   let wa = String(formData.get("wa") || "").trim();
 
   if (!name || !wa) {
-    return { error: "Nama dan nomor WhatsApp wajib diisi." };
+    return { error: t.errors.nameWaRequired };
   }
 
   const { rows } = await q("SELECT * FROM accounts WHERE id = $1 AND status = 'ready'", [accountId]);
   const account = rows[0];
   if (!account) {
-    return { error: "Akun baru saja disewa orang lain. Pilih akun lain, ya." };
+    return { error: t.errors.accountGone };
   }
 
   let hours, total, packageLabel = null;
@@ -132,7 +155,7 @@ export async function createOrder(prev, formData) {
     const { rows: pkgs } = await q("SELECT * FROM packages WHERE id = $1", [packageId]);
     const pkg = pkgs[0];
     if (!pkg) {
-      return { error: "Paket tidak ditemukan. Muat ulang halaman lalu coba lagi." };
+      return { error: t.errors.pkgNotFound };
     }
     hours = pkg.duration_hours;
     total = pkg.price;
@@ -156,7 +179,7 @@ export async function createOrder(prev, formData) {
       [coupon]
     );
     if (!mk[0]) {
-      return { error: "Kode voucher tidak ditemukan atau sudah nonaktif. Hapus kodenya atau pakai kode lain." };
+      return { error: t.errors.couponInvalid };
     }
     marketerId = mk[0].marketer_id;
     couponCode = coupon;
@@ -175,24 +198,51 @@ export async function createOrder(prev, formData) {
   redirect(`/order/${code}`);
 }
 
-/* ---------- Cek status bayar (sisi pembeli) ---------- */
+/* ---------- Cek status bayar ----------
+   Digantikan polling otomatis: components/OrderStatusPoller →
+   /api/order-status/[code] → refreshPaymentStatus di lib/orders.js */
 
-export async function cekBayar(code) {
+
+/* ---------- Bayar via crypto (OxaPay) ---------- */
+
+export async function bayarCrypto(prev, formData) {
+  const t = await getDict();
+  const code = String(formData.get("code") || "");
+  if (!oxapayEnabled()) {
+    return { error: t.errors.cryptoOff };
+  }
+
   const { rows } = await q("SELECT * FROM orders WHERE code = $1", [code]);
   const order = rows[0];
   if (!order) redirect("/");
+  if (order.status !== "pending") redirect(`/order/${code}`);
 
-  if (order.status === "pending") {
-    // Tanya langsung ke API Pakasir
-    const trx = await getTransactionDetail(order);
-    if (trx && trx.status === "completed" && Number(trx.amount) === order.total) {
-      await markOrderPaid(code, trx.payment_method);
+  // Pakai lagi invoice lama kalau masih hidup, supaya tidak menumpuk invoice
+  if (order.oxapay_track_id && order.oxapay_pay_url) {
+    const info = await getPaymentInfo(order.oxapay_track_id);
+    const st = String(info?.status || "").toLowerCase();
+    if (info && isPaid(info) && Number(info.amount) === order.total) {
+      await markOrderPaid(code, paymentLabel(info));
+      revalidatePath(`/order/${code}`);
+      redirect(`/order/${code}`);
     }
+    if (["new", "waiting", "paying", "confirming"].includes(st)) {
+      return { payUrl: order.oxapay_pay_url };
+    }
+    // Status lain (expired, dsb.) → jatuh ke bawah, buat invoice baru
   }
 
-  revalidatePath(`/order/${code}`);
-  revalidatePath("/");
-  redirect(`/order/${code}`);
+  const inv = await createInvoice(order);
+  if (!inv) {
+    return { error: t.errors.cryptoFail };
+  }
+
+  await q("UPDATE orders SET oxapay_track_id = $1, oxapay_pay_url = $2 WHERE id = $3", [
+    String(inv.track_id),
+    inv.payment_url,
+    order.id,
+  ]);
+  return { payUrl: inv.payment_url };
 }
 
 /* ---------- Order (sisi admin) ---------- */
@@ -445,11 +495,12 @@ async function guardMarketer() {
 }
 
 export async function loginMarketer(prev, formData) {
+  const t = await getDict();
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
   if (!email || !password) {
-    return { error: "Email dan password wajib diisi." };
+    return { error: t.errors.loginRequired };
   }
 
   const { rows } = await q(
@@ -458,10 +509,10 @@ export async function loginMarketer(prev, formData) {
   );
   const m = rows[0];
   if (!m || !m.password_hash || !verifyPassword(password, m.password_hash)) {
-    return { error: "Email atau password salah." };
+    return { error: t.errors.loginFailed };
   }
   if (!m.active) {
-    return { error: "Akun marketer ini sedang nonaktif. Hubungi admin." };
+    return { error: t.errors.mkInactive };
   }
   await setMarketerSession(m.id);
   redirect("/marketer");
@@ -474,16 +525,17 @@ export async function logoutMarketer() {
 
 export async function createCoupon(prev, formData) {
   const m = await guardMarketer();
+  const t = await getDict();
 
   let code = cleanCoupon(formData.get("code"));
   if (!code) {
     code = await generateCoupon();
   }
   if (code.length < 3) {
-    return { error: "Kode kupon minimal 3 karakter (huruf/angka/strip)." };
+    return { error: t.errors.couponMin };
   }
   if (await couponExists(code)) {
-    return { error: `Kode ${code} sudah dipakai. Coba kode lain.` };
+    return { error: fill(t.errors.couponTaken, { code }) };
   }
 
   await q("INSERT INTO coupons (marketer_id, code) VALUES ($1, $2)", [m.id, code]);

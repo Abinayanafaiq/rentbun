@@ -3,8 +3,9 @@
 import { useActionState } from "react";
 import { createCoupon } from "@/app/actions";
 import { input } from "@/components/ui";
+import { dict } from "@/lib/dict";
 
-export default function CouponForm() {
+export default function CouponForm({ t = dict.id.marketer }) {
   const [state, formAction, pending] = useActionState(createCoupon, null);
 
   return (
@@ -12,7 +13,7 @@ export default function CouponForm() {
       <div className="flex flex-wrap gap-3">
         <input
           name="code"
-          placeholder="contoh: RAKAHEMAT — kosongkan untuk kode acak"
+          placeholder={t.createPh}
           className={`${input} uppercase flex-1 min-w-56`}
           maxLength={24}
         />
@@ -21,7 +22,7 @@ export default function CouponForm() {
           disabled={pending}
           className="font-bold text-sm px-5 py-2.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors disabled:opacity-50"
         >
-          {pending ? "Membuat..." : "Buat kupon"}
+          {pending ? t.creating : t.createBtn}
         </button>
       </div>
       {state?.error && (

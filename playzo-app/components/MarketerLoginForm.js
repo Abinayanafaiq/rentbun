@@ -3,8 +3,9 @@
 import { useActionState } from "react";
 import { loginMarketer } from "@/app/actions";
 import { card, input, span, label, btnPrimary } from "@/components/ui";
+import { dict } from "@/lib/dict";
 
-export default function MarketerLoginForm() {
+export default function MarketerLoginForm({ t = dict.id.marketer }) {
   const [state, formAction, pending] = useActionState(loginMarketer, null);
 
   return (
@@ -27,7 +28,7 @@ export default function MarketerLoginForm() {
           name="password"
           type="password"
           required
-          placeholder="Masukkan password"
+          placeholder="••••••••"
           className={input}
         />
       </label>
@@ -39,7 +40,7 @@ export default function MarketerLoginForm() {
       )}
 
       <button type="submit" disabled={pending} className={btnPrimary}>
-        {pending ? "Memeriksa..." : "Masuk ke dashboard"}
+        {pending ? "..." : t.loginBtn}
       </button>
     </form>
   );
