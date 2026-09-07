@@ -19,6 +19,7 @@ export default async function AdminMarketer() {
   const [{ rows: marketers }, bonusDays] = await Promise.all([
     q(`
       SELECT m.*,
+        (SELECT string_agg(c.code, ', ' ORDER BY c.id) FROM coupons c WHERE c.marketer_id = m.id AND c.active) AS coupon_codes,
         count(o.id) FILTER (WHERE o.status IN ('paid', 'done')) AS used_count,
         coalesce(sum(o.bonus_hours) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS bonus_given
       FROM marketers m
@@ -38,7 +39,7 @@ export default async function AdminMarketer() {
           </Link>
           <h1 className="font-display font-extrabold text-[clamp(1.9rem,4vw,2.6rem)] mt-1.5 text-text">Marketer</h1>
           <p className="text-soft mt-1">
-            Rekrut marketer sebanyak yang kamu mau. Tiap marketer punya kode kupon untuk dibagikan ke calon penyewa.
+            Rekrut marketer sebanyak yang kamu mau. Marketer login di /marketer/login untuk membuat &amp; memantau kode kuponnya sendiri.
           </p>
         </div>
         <Link
@@ -93,12 +94,16 @@ export default async function AdminMarketer() {
                 <tr key={m.id} className="border-b border-line/50 last:border-0 align-top">
                   <td className="p-4">
                     <span className="font-semibold block text-text">{m.name}</span>
-                    <span className="text-soft text-xs">{m.wa || "Tanpa WA"} · sejak {tanggal(m.created_at)}</span>
+                    <span className="text-soft text-xs">
+                      {m.email || "Belum ada email login"} · {m.wa || "tanpa WA"} · sejak {tanggal(m.created_at)}
+                    </span>
                   </td>
                   <td className="p-4">
-                    <span className="font-mono font-bold text-text bg-surface2 border border-line rounded px-2 py-1">
-                      {m.coupon_code}
-                    </span>
+                    {m.coupon_codes ? (
+                      <span className="font-mono font-bold text-text">{m.coupon_codes}</span>
+                    ) : (
+                      <span className="text-soft text-xs">Belum ada kupon</span>
+                    )}
                   </td>
                   <td className="p-4 text-text">{m.used_count}x</td>
                   <td className="p-4 text-text">
@@ -131,7 +136,7 @@ export default async function AdminMarketer() {
                       <ConfirmSubmit
                         action={deleteMarketer.bind(null, m.id)}
                         label="Hapus"
-                        message={`Hapus marketer "${m.name}"? Kupon ${m.coupon_code} tidak bisa dipakai lagi. Riwayat order tetap tersimpan.`}
+                        message={`Hapus marketer "${m.name}"? Semua kuponnya ikut terhapus dan tidak bisa dipakai lagi. Riwayat order tetap tersimpan.`}
                         className={`${BTN} text-soft hover:bg-surface2`}
                       />
                     </div>

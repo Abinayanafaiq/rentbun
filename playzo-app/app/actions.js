@@ -15,7 +15,12 @@ import {
 } from "@/lib/userAuth";
 import { getTransactionDetail } from "@/lib/pakasir";
 import { markOrderPaid } from "@/lib/orders";
-import { getVoucherBonusDays } from "@/lib/marketers";
+import { getVoucherBonusDays, cleanCoupon, generateCoupon, couponExists } from "@/lib/marketers";
+import {
+  setMarketerSession,
+  clearMarketerSession,
+  getCurrentMarketer,
+} from "@/lib/marketerAuth";
 import { uploadPhoto, deletePhoto } from "@/lib/storage";
 
 /* ---------- Auth admin ---------- */
@@ -145,13 +150,15 @@ export async function createOrder(prev, formData) {
 
   if (coupon) {
     const { rows: mk } = await q(
-      "SELECT id FROM marketers WHERE upper(coupon_code) = $1 AND active",
+      `SELECT c.marketer_id
+       FROM coupons c JOIN marketers m ON m.id = c.marketer_id
+       WHERE upper(c.code) = $1 AND c.active AND m.active`,
       [coupon]
     );
     if (!mk[0]) {
       return { error: "Kode voucher tidak ditemukan atau sudah nonaktif. Hapus kodenya atau pakai kode lain." };
     }
-    marketerId = mk[0].id;
+    marketerId = mk[0].marketer_id;
     couponCode = coupon;
     bonusHours = (await getVoucherBonusDays()) * 24;
   }
@@ -350,23 +357,7 @@ export async function deletePackage(packageId) {
   revalidatePath("/admin/paket");
 }
 
-/* ---------- Marketer & kupon (sisi admin) ---------- */
-
-// Normalisasi kode kupon: kapital, hanya huruf/angka/strip
-function cleanCoupon(raw) {
-  return String(raw || "").toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 24);
-}
-
-async function uniqueCoupon(base) {
-  let code = base;
-  // Kalau bentrok, tambah/acak sampai unik
-  for (let i = 0; i < 10; i++) {
-    const { rows } = await q("SELECT id FROM marketers WHERE upper(coupon_code) = $1", [code]);
-    if (!rows[0]) return code;
-    code = "MK" + crypto.randomBytes(3).toString("hex").toUpperCase();
-  }
-  return code;
-}
+/* ---------- Marketer (sisi admin) ---------- */
 
 export async function saveMarketer(prev, formData) {
   await guard();
@@ -374,37 +365,46 @@ export async function saveMarketer(prev, formData) {
   const id = Number(formData.get("id")) || null;
   const name = String(formData.get("name") || "").trim();
   const wa = String(formData.get("wa") || "").trim();
-  let coupon = cleanCoupon(formData.get("coupon_code"));
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
 
   if (!name) {
     return { error: "Nama marketer wajib diisi." };
   }
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    return { error: "Email login wajib diisi dengan format yang valid." };
+  }
+
+  const { rows: dup } = await q(
+    "SELECT id FROM marketers WHERE lower(email) = $1 AND id <> $2",
+    [email, id || 0]
+  );
+  if (dup[0]) {
+    return { error: "Email itu sudah dipakai marketer lain." };
+  }
 
   if (id) {
-    // Edit: kupon kosong = pertahankan kupon lama
-    if (!coupon) {
-      const { rows } = await q("SELECT coupon_code FROM marketers WHERE id = $1", [id]);
-      coupon = rows[0]?.coupon_code;
+    if (password) {
+      if (password.length < 6) {
+        return { error: "Password minimal 6 karakter." };
+      }
+      await q(
+        "UPDATE marketers SET name = $1, wa = $2, email = $3, password_hash = $4 WHERE id = $5",
+        [name, wa, email, hashPassword(password), id]
+      );
+    } else {
+      // Password kosong saat edit = tidak diganti
+      await q("UPDATE marketers SET name = $1, wa = $2, email = $3 WHERE id = $4", [
+        name, wa, email, id,
+      ]);
     }
-    const { rows: dup } = await q(
-      "SELECT id FROM marketers WHERE upper(coupon_code) = $1 AND id <> $2",
-      [coupon, id]
-    );
-    if (dup[0]) {
-      return { error: `Kode kupon ${coupon} sudah dipakai marketer lain.` };
-    }
-    await q("UPDATE marketers SET name = $1, wa = $2, coupon_code = $3 WHERE id = $4", [
-      name, wa, coupon, id,
-    ]);
   } else {
-    if (!coupon) {
-      coupon = await uniqueCoupon("MK" + crypto.randomBytes(3).toString("hex").toUpperCase());
+    if (password.length < 6) {
+      return { error: "Password minimal 6 karakter." };
     }
-    const { rows: dup } = await q("SELECT id FROM marketers WHERE upper(coupon_code) = $1", [coupon]);
-    if (dup[0]) {
-      return { error: `Kode kupon ${coupon} sudah dipakai marketer lain.` };
-    }
-    await q("INSERT INTO marketers (name, wa, coupon_code) VALUES ($1, $2, $3)", [name, wa, coupon]);
+    await q("INSERT INTO marketers (name, wa, email, password_hash) VALUES ($1, $2, $3, $4)", [
+      name, wa, email, hashPassword(password),
+    ]);
   }
 
   revalidatePath("/admin/marketer");
@@ -434,4 +434,74 @@ export async function saveVoucherSettings(formData) {
     [String(days)]
   );
   revalidatePath("/admin/marketer");
+}
+
+/* ---------- Auth & kupon (sisi marketer) ---------- */
+
+async function guardMarketer() {
+  const m = await getCurrentMarketer();
+  if (!m) redirect("/marketer/login");
+  return m;
+}
+
+export async function loginMarketer(prev, formData) {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+
+  if (!email || !password) {
+    return { error: "Email dan password wajib diisi." };
+  }
+
+  const { rows } = await q(
+    "SELECT id, password_hash, active FROM marketers WHERE lower(email) = $1",
+    [email]
+  );
+  const m = rows[0];
+  if (!m || !m.password_hash || !verifyPassword(password, m.password_hash)) {
+    return { error: "Email atau password salah." };
+  }
+  if (!m.active) {
+    return { error: "Akun marketer ini sedang nonaktif. Hubungi admin." };
+  }
+  await setMarketerSession(m.id);
+  redirect("/marketer");
+}
+
+export async function logoutMarketer() {
+  await clearMarketerSession();
+  redirect("/");
+}
+
+export async function createCoupon(prev, formData) {
+  const m = await guardMarketer();
+
+  let code = cleanCoupon(formData.get("code"));
+  if (!code) {
+    code = await generateCoupon();
+  }
+  if (code.length < 3) {
+    return { error: "Kode kupon minimal 3 karakter (huruf/angka/strip)." };
+  }
+  if (await couponExists(code)) {
+    return { error: `Kode ${code} sudah dipakai. Coba kode lain.` };
+  }
+
+  await q("INSERT INTO coupons (marketer_id, code) VALUES ($1, $2)", [m.id, code]);
+  revalidatePath("/marketer");
+  redirect("/marketer");
+}
+
+export async function toggleCoupon(couponId) {
+  const m = await guardMarketer();
+  await q("UPDATE coupons SET active = NOT active WHERE id = $1 AND marketer_id = $2", [
+    couponId, m.id,
+  ]);
+  revalidatePath("/marketer");
+}
+
+export async function deleteCoupon(couponId) {
+  const m = await guardMarketer();
+  // Riwayat order aman: orders menyimpan snapshot coupon_code & marketer_id
+  await q("DELETE FROM coupons WHERE id = $1 AND marketer_id = $2", [couponId, m.id]);
+  revalidatePath("/marketer");
 }

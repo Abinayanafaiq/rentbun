@@ -22,19 +22,42 @@ export default function MarketerForm({ marketer }) {
         <input name="wa" type="tel" defaultValue={m.wa} placeholder="contoh: 081234567890" className={input} />
       </label>
 
-      <label className={`${label} mb-6`}>
-        <span className={span}>Kode kupon</span>
-        <input
-          name="coupon_code"
-          defaultValue={m.coupon_code}
-          placeholder={m.id ? "Kosongkan untuk tetap pakai kode lama" : "Kosongkan untuk auto-generate"}
-          className={`${input} uppercase`}
-          maxLength={24}
-        />
-        <span className="text-xs text-soft mt-1 block">
-          Kode ini yang dibagikan marketer ke calon penyewa. Huruf, angka, dan strip saja.
-        </span>
-      </label>
+      <div className="border-t border-line pt-5 mt-5 mb-6">
+        <p className="font-semibold text-sm mb-1">Login dashboard marketer</p>
+        <p className="text-xs text-soft mb-4">
+          Marketer masuk di halaman <span className="font-mono font-bold">/marketer/login</span> pakai email &amp; password ini
+          untuk memantau dan membuat kode kuponnya sendiri.
+        </p>
+
+        <label className={`${label} mb-4`}>
+          <span className={span}>Email login</span>
+          <input
+            name="email"
+            type="email"
+            required
+            defaultValue={m.email}
+            placeholder="contoh: raka@email.com"
+            className={input}
+          />
+        </label>
+
+        <label className={label}>
+          <span className={span}>Password</span>
+          <input
+            name="password"
+            type="text"
+            required={!m.id}
+            minLength={6}
+            placeholder={m.id ? "Kosongkan kalau tidak diganti" : "Minimal 6 karakter"}
+            className={input}
+          />
+          <span className="text-xs text-soft mt-1 block">
+            {m.id
+              ? "Isi hanya kalau mau reset password marketer ini."
+              : "Catat password ini dan berikan ke marketer bersama emailnya."}
+          </span>
+        </label>
+      </div>
 
       {state?.error && (
         <p className="mb-4 text-sm font-semibold text-live bg-livebg border border-live/50 rounded-md px-4 py-2.5">

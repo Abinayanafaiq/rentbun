@@ -31,7 +31,7 @@ export default async function SiteFooter() {
             Rentzo tidak berafiliasi dengan Moonton. Mobile Legends dan seluruh merek terkait milik pemiliknya masing-masing.
           </p>
           <p>
-            © 2026 Rentzo · <Link href="/admin/login" className="underline underline-offset-2 hover:text-soft">Admin</Link>
+            © 2026 Rentzo · <Link href="/marketer/login" className="underline underline-offset-2 hover:text-soft">Marketer</Link> · <Link href="/admin/login" className="underline underline-offset-2 hover:text-soft">Admin</Link>
           </p>
         </div>
       </div>
