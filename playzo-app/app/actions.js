@@ -515,6 +515,15 @@ export async function deleteMarketer(marketerId) {
   revalidatePath("/admin");
 }
 
+// Nolkan penghitung komisi marketer (Rp & USD) setelah payout.
+// Riwayat order tidak dihapus: komisi hanya dihitung dari order setelah titik reset.
+export async function resetCommission(marketerId) {
+  await guard();
+  await q("UPDATE marketers SET commission_reset_at = now() WHERE id = $1", [marketerId]);
+  revalidatePath("/admin/marketer");
+  revalidatePath("/marketer");
+}
+
 export async function saveVoucherSettings(formData) {
   await guard();
   const days = Math.max(1, Math.min(365, Number(formData.get("bonus_days")) || 3));

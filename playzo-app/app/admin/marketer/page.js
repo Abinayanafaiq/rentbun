@@ -4,7 +4,7 @@ import { isAdmin } from "@/lib/auth";
 import { q } from "@/lib/db";
 import { rp, usd, tanggal } from "@/lib/format";
 import { getVoucherBonusDays, getCommissionRate, getCommissionRateUsd, getUsdRate } from "@/lib/marketers";
-import { saveVoucherSettings, saveCommissionSettings, saveUsdSettings, toggleMarketer, deleteMarketer } from "@/app/actions";
+import { saveVoucherSettings, saveCommissionSettings, saveUsdSettings, toggleMarketer, deleteMarketer, resetCommission } from "@/app/actions";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { input } from "@/components/ui";
 
@@ -22,8 +22,10 @@ export default async function AdminMarketer() {
         (SELECT string_agg(c.code, ', ' ORDER BY c.id) FROM coupons c WHERE c.marketer_id = m.id AND c.active) AS coupon_codes,
         count(o.id) FILTER (WHERE o.status IN ('paid', 'done')) AS used_count,
         coalesce(sum(o.bonus_hours) FILTER (WHERE o.status IN ('paid', 'done')), 0) AS bonus_given,
-        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'IDR'), 0) AS commission_earned,
-        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'USD'), 0) AS commission_earned_usd
+        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'IDR'
+          AND (m.commission_reset_at IS NULL OR o.created_at > m.commission_reset_at)), 0) AS commission_earned,
+        coalesce(sum(o.commission) FILTER (WHERE o.status IN ('paid', 'done') AND o.currency = 'USD'
+          AND (m.commission_reset_at IS NULL OR o.created_at > m.commission_reset_at)), 0) AS commission_earned_usd
       FROM marketers m
       LEFT JOIN orders o ON o.marketer_id = m.id
       GROUP BY m.id
@@ -177,6 +179,9 @@ export default async function AdminMarketer() {
                     {m.commission_earned_usd > 0 && (
                       <span className="block text-xs font-semibold text-text">{usd(m.commission_earned_usd)}</span>
                     )}
+                    {m.commission_reset_at && (
+                      <span className="block text-[10px] text-faint">direset {tanggal(m.commission_reset_at)}</span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span
@@ -202,6 +207,12 @@ export default async function AdminMarketer() {
                           {m.active ? "Nonaktifkan" : "Aktifkan"}
                         </button>
                       </form>
+                      <ConfirmSubmit
+                        action={resetCommission.bind(null, m.id)}
+                        label="Reset komisi"
+                        message={`Reset komisi "${m.name}"? Penghitung komisi Rp dan USD kembali ke 0. Lakukan setelah komisi dibayar. Riwayat order tetap tersimpan.`}
+                        className={`${BTN} text-soft hover:bg-surface2`}
+                      />
                       <ConfirmSubmit
                         action={deleteMarketer.bind(null, m.id)}
                         label="Hapus"

@@ -45,7 +45,7 @@ export async function getCurrentMarketer() {
   if (!id) return null;
   const { q } = await import("@/lib/db");
   const { rows } = await q(
-    "SELECT id, name, email, wa, created_at FROM marketers WHERE id = $1 AND active",
+    "SELECT id, name, email, wa, created_at, commission_reset_at FROM marketers WHERE id = $1 AND active",
     [id]
   );
   return rows[0] || null;

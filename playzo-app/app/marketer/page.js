@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentMarketer } from "@/lib/marketerAuth";
-import { getVoucherBonusDays, getUsdRate } from "@/lib/marketers";
+import { getVoucherBonusDays } from "@/lib/marketers";
 import { q } from "@/lib/db";
 import { rp, usd, tanggal } from "@/lib/format";
 import { logoutMarketer, toggleCoupon, deleteCoupon } from "@/app/actions";
@@ -19,7 +19,7 @@ export default async function MarketerDashboard() {
   const [m, t, lang] = await Promise.all([getCurrentMarketer(), getDict(), getLang()]);
   if (!m) redirect("/marketer/login");
 
-  const [bonusDays, { rows: coupons }, { rows: orders }, { rows: commRows }, usdRate] = await Promise.all([
+  const [bonusDays, { rows: coupons }, { rows: orders }, { rows: commRows }] = await Promise.all([
     getVoucherBonusDays(),
     q(
       `SELECT c.*,
@@ -35,13 +35,15 @@ export default async function MarketerDashboard() {
       "SELECT * FROM orders WHERE marketer_id = $1 ORDER BY created_at DESC LIMIT 50",
       [m.id]
     ),
+    // Komisi dihitung dari order setelah titik reset terakhir (admin reset setelah payout)
     q(
       `SELECT
          coalesce(sum(commission) FILTER (WHERE o.currency = 'IDR'), 0) AS total_idr,
          coalesce(sum(commission) FILTER (WHERE o.currency = 'USD'), 0) AS total_usd
        FROM orders o
-       WHERE o.marketer_id = $1 AND o.status IN ('paid', 'done')`,
-      [m.id]
+       WHERE o.marketer_id = $1 AND o.status IN ('paid', 'done')
+         AND ($2::timestamptz IS NULL OR o.created_at > $2::timestamptz)`,
+      [m.id, m.commission_reset_at || null]
     ),
   ]);
 
@@ -49,9 +51,8 @@ export default async function MarketerDashboard() {
   const totalUsed = coupons.reduce((sum, c) => sum + Number(c.used_count), 0);
   const totalCommissionIdr = Number(commRows[0]?.total_idr || 0);
   const totalCommissionUsd = Number(commRows[0]?.total_usd || 0);
-  // USD dikonversi ke Rupiah (kurs tetap) lalu dijumlahkan ke total
-  const totalCommission = totalCommissionIdr + totalCommissionUsd * usdRate;
-  const commissionValue = rp(totalCommission);
+  // Tampil terpisah per mata uang: Rp di kartu utama, USD di kartu "Komisi Dollar"
+  const commissionValue = rp(totalCommissionIdr);
   const cards = [
     { label: t.marketer.statActive, value: activeCoupons },
     { label: t.marketer.statUsed, value: `${totalUsed}x` },
