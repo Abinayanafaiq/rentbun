@@ -29,6 +29,12 @@ export default async function SiteHeader() {
           >
             {t.header.howTo}
           </Link>
+          <Link
+            href="/laporan"
+            className="px-3 py-2 rounded-full text-soft hover:text-text hover:bg-surface2 transition-colors"
+          >
+            {t.header.reports}
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">

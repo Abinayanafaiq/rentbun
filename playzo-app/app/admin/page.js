@@ -25,7 +25,8 @@ export default async function AdminDashboard() {
          FROM orders o WHERE o.status IN ('paid', 'done')) AS revenue,
         (SELECT coalesce(sum(o.total), 0) FROM orders o WHERE o.status IN ('paid', 'done') AND o.currency = 'USD') AS revenue_usd,
         (SELECT count(*) FROM users) AS total_users,
-        (SELECT count(*) FROM marketers WHERE active) AS marketers
+        (SELECT count(*) FROM marketers WHERE active) AS marketers,
+        (SELECT count(*) FROM account_reports WHERE status = 'pending') AS reports_pending
     `),
     q("SELECT * FROM orders ORDER BY created_at DESC LIMIT 50"),
   ]);
@@ -39,6 +40,7 @@ export default async function AdminDashboard() {
     { label: "Order menunggu bayar", value: s.pending },
     { label: "Total pendapatan", value: rp(s.revenue) },
     { label: "Pendapatan dari Dollar", value: usd(s.revenue_usd) },
+    { label: "Laporan akun bermasalah", value: s.reports_pending },
   ];
 
   return (
@@ -62,6 +64,12 @@ export default async function AdminDashboard() {
             Kelola marketer
           </Link>
           <Link
+            href="/admin/laporan"
+            className="font-bold text-sm px-5 py-2.5 rounded-md border border-line text-text hover:bg-surface2 transition-colors"
+          >
+            Laporan akun bermasalah
+          </Link>
+          <Link
             href="/admin/paket"
             className="font-bold text-sm px-5 py-2.5 rounded-md bg-accent text-onaccent hover:bg-accent2 transition-colors"
           >
@@ -76,7 +84,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Statistik */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-11">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-11">
         {cards.map((c) => (
           <div key={c.label} className="bg-surface border border-line rounded-lg p-5">
             <p className="text-sm font-semibold text-soft">{c.label}</p>

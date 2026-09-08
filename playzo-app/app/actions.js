@@ -634,3 +634,76 @@ export async function deleteCoupon(couponId) {
   await q("DELETE FROM coupons WHERE id = $1 AND marketer_id = $2", [couponId, m.id]);
   revalidatePath("/marketer");
 }
+
+/* ---------- Laporan akun bermasalah (blacklist hackback) ---------- */
+
+const REPORT_TYPES = ["hackback", "password", "scam", "other"];
+
+export async function submitReport(prev, formData) {
+  const t = await getDict();
+
+  // Honeypot anti-bot: field tersembunyi yang seharusnya tetap kosong
+  if (String(formData.get("website") || "").trim()) {
+    return { ok: true };
+  }
+
+  const userIdIngame = String(formData.get("user_id_ingame") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const reporterName = String(formData.get("reporter_name") || "").trim();
+  const problemType = String(formData.get("problem_type") || "hackback");
+
+  if (!userIdIngame || !description || !reporterName) {
+    return { error: t.errors.reportRequired };
+  }
+  if (description.length < 20) {
+    return { error: t.errors.reportDetail };
+  }
+  if (!REPORT_TYPES.includes(problemType)) {
+    return { error: t.errors.reportType };
+  }
+
+  const evidenceUrl = String(formData.get("evidence_url") || "").trim();
+  if (evidenceUrl && !/^https?:\/\//i.test(evidenceUrl)) {
+    return { error: t.errors.reportEvidence };
+  }
+
+  await q(
+    `INSERT INTO account_reports (game, user_id_ingame, zone_server, nickname, seller, seller_contact, problem_type, description, evidence_url, reporter_name, reporter_contact)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    [
+      String(formData.get("game") || "Mobile Legends").trim() || "Mobile Legends",
+      userIdIngame,
+      String(formData.get("zone_server") || "").trim(),
+      String(formData.get("nickname") || "").trim(),
+      String(formData.get("seller") || "").trim(),
+      String(formData.get("seller_contact") || "").trim(),
+      problemType,
+      description,
+      evidenceUrl,
+      reporterName,
+      String(formData.get("reporter_contact") || "").trim(),
+    ]
+  );
+
+  revalidatePath("/laporan");
+  revalidatePath("/admin/laporan");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function setReportStatus(reportId, status) {
+  await guard();
+  const next = ["pending", "verified", "rejected"].includes(status) ? status : "pending";
+  await q("UPDATE account_reports SET status = $1 WHERE id = $2", [next, reportId]);
+  revalidatePath("/laporan");
+  revalidatePath("/admin/laporan");
+  revalidatePath("/admin");
+}
+
+export async function deleteReport(reportId) {
+  await guard();
+  await q("DELETE FROM account_reports WHERE id = $1", [reportId]);
+  revalidatePath("/laporan");
+  revalidatePath("/admin/laporan");
+  revalidatePath("/admin");
+}
