@@ -32,7 +32,7 @@ export default async function SiteFooter() {
             {t.footer.disclaimer}
           </p>
           <p>
-            © 2026 Rentzo · <Link href="/laporan" className="underline underline-offset-2 hover:text-soft">{t.footer.reports}</Link> · <Link href="/marketer/login" className="underline underline-offset-2 hover:text-soft">Marketer</Link> · <Link href="/admin/login" className="underline underline-offset-2 hover:text-soft">Admin</Link>
+            © 2026 Rentzo · <Link href="/laporan" className="underline underline-offset-2 hover:text-soft">{t.footer.reports}</Link>
           </p>
         </div>
       </div>
