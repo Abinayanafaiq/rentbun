@@ -49,7 +49,7 @@ export const dict = {
       howDesc: "Tiga langkah, biasanya selesai kurang dari lima menit.",
       steps: [
         { title: "Pilih akun", desc: "Telusuri katalog, cek rank, skin, dan harganya. Semua info ditulis apa adanya." },
-        { title: "Bayar", desc: "Isi form sewa, transfer sesuai total, lalu kirim bukti ke admin lewat WhatsApp." },
+        { title: "Bayar", desc: "Isi form sewa, transfer sesuai total, lalu kirim bukti ke admin lewat Telegram." },
         { title: "Login dan main", desc: "Setelah pembayaran terkonfirmasi, email dan password akun tampil di halaman order." },
       ],
       serviceTitle: "Bukan cuma janji aman.",
@@ -208,6 +208,9 @@ export const dict = {
       waCancel: "Halo min, saya mau tanya soal order {code} yang dibatalkan",
       durationPkg: "paket {label}",
       bonusConcat: " + bonus {days} hari dari kupon {code}",
+      remaining: "Sisa masa sewa",
+      remainingEnded: "Masa sewa sudah berakhir",
+      remainingUntil: "Berakhir {date}",
     },
     profil: {
       hello: "Halo, {name}!",
@@ -228,6 +231,7 @@ export const dict = {
       pkg: "Paket {label}",
       hours: "{n} jam",
       bonus: "+{days} hari kupon {code}",
+      sisa: "Sisa {value}",
     },
     auth: {
       eyebrow: "Ruang mainmu menunggu",
@@ -435,7 +439,7 @@ export const dict = {
       howDesc: "Three steps, usually done in under five minutes.",
       steps: [
         { title: "Pick an account", desc: "Browse the catalog, check the rank, skins, and price. All info is written as-is." },
-        { title: "Pay", desc: "Fill in the rental form, transfer the total, then send the receipt to the admin via WhatsApp." },
+        { title: "Pay", desc: "Fill in the rental form, transfer the total, then send the receipt to the admin via Telegram." },
         { title: "Log in & play", desc: "Once your payment is confirmed, the account email and password appear on the order page." },
       ],
       serviceTitle: "More than a safety promise.",
@@ -594,6 +598,9 @@ export const dict = {
       waCancel: "Hi admin, I want to ask about my cancelled order {code}",
       durationPkg: "{label} package",
       bonusConcat: " + {days}-day bonus from coupon {code}",
+      remaining: "Time remaining",
+      remainingEnded: "The rental period has ended",
+      remainingUntil: "Ends {date}",
     },
     profil: {
       hello: "Hi, {name}!",
@@ -614,6 +621,7 @@ export const dict = {
       pkg: "{label} package",
       hours: "{n} hours",
       bonus: "+{days} days coupon {code}",
+      sisa: "{value} left",
     },
     auth: {
       eyebrow: "Your playground awaits",

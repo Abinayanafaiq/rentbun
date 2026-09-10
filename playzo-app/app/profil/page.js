@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/userAuth";
 import { q } from "@/lib/db";
-import { rp, tanggal } from "@/lib/format";
+import { rp, tanggal, sisaSewa, sisaSewaText } from "@/lib/format";
 import { logoutUser } from "@/app/actions";
 import { getDict, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
@@ -81,7 +81,9 @@ export default async function ProfilPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((o) => (
+              {orders.map((o) => {
+                const sisa = sisaSewa(o);
+                return (
                 <tr key={o.id} className="border-b border-line/50 last:border-0 align-top">
                   <td className="p-4">
                     <Link href={`/order/${o.code}`} className="font-bold block text-text hover:underline">
@@ -97,13 +99,19 @@ export default async function ProfilPage() {
                         {fill(t.profil.bonus, { days: Math.round(o.bonus_hours / 24), code: o.coupon_code })}
                       </span>
                     )}
+                    {sisa && (
+                      <span className={`block text-xs font-bold mt-0.5 ${sisa.habis ? "text-faint" : "text-ok"}`}>
+                        {fill(t.profil.sisa, { value: sisaSewaText(o, lang) })}
+                      </span>
+                    )}
                   </td>
                   <td className="p-4 font-bold text-text">{rp(o.total)}</td>
                   <td className="p-4">
                     <StatusBadge status={o.status} lang={lang} />
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

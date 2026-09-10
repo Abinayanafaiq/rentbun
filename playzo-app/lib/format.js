@@ -18,6 +18,28 @@ export function tanggal(d) {
   });
 }
 
+// Sisa masa sewa order aktif (status 'paid'):
+// mulai dari paid_at, lama (hours + bonus_hours) jam.
+// Mengembalikan null kalau order tidak sedang berjalan.
+export function sisaSewa(order, now = Date.now()) {
+  if (order?.status !== "paid" || !order.paid_at) return null;
+  const totalJam = Number(order.hours || 0) + Number(order.bonus_hours || 0);
+  const sisa = new Date(order.paid_at).getTime() + totalJam * 3600000 - now;
+  if (sisa <= 0) return { jam: 0, menit: 0, habis: true };
+  const totalMenit = Math.floor(sisa / 60000);
+  return { jam: Math.floor(totalMenit / 60), menit: totalMenit % 60, habis: false };
+}
+
+// Teks sisa masa sewa, mis. "23 jam 15 menit" / "23h 15m"
+export function sisaSewaText(order, lang = "id", now = Date.now()) {
+  const s = sisaSewa(order, now);
+  if (!s) return null;
+  if (s.habis) return lang === "en" ? "ended" : "habis";
+  return lang === "en"
+    ? s.jam > 0 ? `${s.jam}h ${s.menit}m` : `${s.menit}m`
+    : s.jam > 0 ? `${s.jam} jam ${s.menit} menit` : `${s.menit} menit`;
+}
+
 // Tier rank ML → warna cover kartu
 export function tierOf(rank) {
   const r = (rank || "").toLowerCase();

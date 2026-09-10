@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { q } from "@/lib/db";
 import { rp } from "@/lib/format";
-import { waLink } from "@/lib/site";
+import { tgLink } from "@/lib/site";
 import { photoUrl } from "@/lib/storage";
 import { getDict } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
@@ -155,7 +155,7 @@ export default async function Home() {
             {t.home.ctaDesc}
           </p>
           <a
-            href={waLink(t.home.ctaWa)}
+            href={tgLink(t.home.ctaWa)}
             target="_blank"
             rel="noopener noreferrer"
              className="inline-flex justify-center font-bold px-7 py-3.5 sm:py-3 rounded-sm bg-bg text-text hover:bg-surface2 transition-colors"

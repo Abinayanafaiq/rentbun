@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WA_DISPLAY } from "@/lib/site";
+import { TELEGRAM_DISPLAY } from "@/lib/site";
 import { getDict } from "@/lib/i18n";
 import { photoUrl } from "@/lib/storage";
 
@@ -21,7 +21,7 @@ export default async function SiteFooter() {
           <div>
             <p className="font-bold text-sm mb-2 text-text">{t.footer.contact}</p>
             <p className="text-soft text-sm">
-              WhatsApp: {WA_DISPLAY}
+              Telegram: {TELEGRAM_DISPLAY}
               <br />
               Instagram: @rentzo.id
             </p>

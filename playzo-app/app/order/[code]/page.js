@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { q } from "@/lib/db";
-import { rp, money, tanggal } from "@/lib/format";
-import { waLink } from "@/lib/site";
+import { rp, money, tanggal, sisaSewa, sisaSewaText } from "@/lib/format";
+import { tgLink } from "@/lib/site";
 import { pakasirPayUrl } from "@/lib/pakasir";
 import { oxapayEnabled } from "@/lib/oxapay";
 import { getDict, getLang } from "@/lib/i18n";
@@ -103,7 +103,7 @@ export default async function OrderPage({ params }) {
           <p className="text-sm text-soft mt-4 text-center">
             {oxapayEnabled() ? t.order.processedBoth : t.order.processedPakasir} {t.order.needHelp}{" "}
             <a
-              href={waLink(fill(t.order.waIssue, { code: order.code }))}
+              href={tgLink(fill(t.order.waIssue, { code: order.code }))}
               className="underline underline-offset-2 font-semibold text-accent hover:text-accent2"
             >
               {t.order.chatAdmin}
@@ -119,6 +119,34 @@ export default async function OrderPage({ params }) {
           <p className="text-sm text-soft mb-5">
             {fill(t.order.paidDesc, { duration: durationText })}
           </p>
+
+          {/* Sisa masa sewa berjalan */}
+          {(() => {
+            const sisa = sisaSewa(order);
+            if (!sisa) return null;
+            const totalJam = Number(order.hours || 0) + Number(order.bonus_hours || 0);
+            const endAt = new Date(new Date(order.paid_at).getTime() + totalJam * 3600000);
+            return (
+              <div
+                className={`mb-5 rounded-md border px-4 py-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 ${
+                  sisa.habis ? "bg-surface2 border-line2" : "bg-ok/10 border-ok/40"
+                }`}
+              >
+                <div>
+                  <p className={`text-xs font-bold uppercase tracking-wide ${sisa.habis ? "text-faint" : "text-ok"}`}>
+                    {t.order.remaining}
+                  </p>
+                  <p className={`font-display font-extrabold text-2xl ${sisa.habis ? "text-soft" : "text-text"}`}>
+                    {sisa.habis ? t.order.remainingEnded : sisaSewaText(order, lang)}
+                  </p>
+                </div>
+                <p className="text-xs font-semibold text-soft">
+                  {fill(t.order.remainingUntil, { date: tanggal(endAt) })}
+                </p>
+              </div>
+            );
+          })()}
+
           {bonusDays > 0 && (
             <p className="mb-5 text-sm font-semibold text-ok bg-ok/10 border border-ok/40 rounded-md px-4 py-2.5">
               {fill(t.order.paidBonus, { code: order.coupon_code, days: bonusDays })}
@@ -130,7 +158,7 @@ export default async function OrderPage({ params }) {
           </div>
           <p className="text-sm text-soft mt-4">
             {t.order.loginIssue}{" "}
-            <a href={waLink(fill(t.order.waLogin, { code: order.code }))} className="underline underline-offset-2 font-semibold text-accent hover:text-accent2">
+            <a href={tgLink(fill(t.order.waLogin, { code: order.code }))} className="underline underline-offset-2 font-semibold text-accent hover:text-accent2">
               {t.order.chatAdmin}
             </a>
           </p>
@@ -161,7 +189,7 @@ export default async function OrderPage({ params }) {
             {t.order.cancelDesc}
           </p>
           <a
-            href={waLink(fill(t.order.waCancel, { code: order.code }))}
+            href={tgLink(fill(t.order.waCancel, { code: order.code }))}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex font-bold px-6 py-3.5 rounded-md border border-line text-text hover:bg-surface2"
