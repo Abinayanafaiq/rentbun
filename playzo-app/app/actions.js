@@ -6,6 +6,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { q } from "@/lib/db";
 import { isAdmin, adminToken } from "@/lib/auth";
+import { safeEqual } from "@/lib/secrets";
+import { rateLimit, clientIp } from "@/lib/rateLimit";
+import { grantOrderAccess, canViewOrder } from "@/lib/orderAccess";
 import {
   hashPassword,
   verifyPassword,
@@ -54,8 +57,19 @@ export async function setLang(lang) {
 /* ---------- Auth admin ---------- */
 
 export async function login(prev, formData) {
+  const ip = await clientIp(null);
+  if (!rateLimit(`admin-login:${ip}`, 5, 15 * 60 * 1000)) {
+    return {
+      error: "Terlalu banyak percobaan. Tunggu 15 menit, coba lagi.",
+    };
+  }
   const password = String(formData.get("password") || "");
-  if (password === process.env.ADMIN_PASSWORD) {
+  const expected = String(process.env.ADMIN_PASSWORD || "");
+  if (
+    expected &&
+    password.length === expected.length &&
+    safeEqual(password, expected)
+  ) {
     const store = await cookies();
     store.set("pz_session", adminToken(), {
       httpOnly: true,
@@ -119,6 +133,11 @@ export async function loginUser(prev, formData) {
     return { error: t.errors.loginRequired };
   }
 
+  const ip = await clientIp(null);
+  if (!rateLimit(`user-login:${ip}`, 10, 15 * 60 * 1000)) {
+    return { error: t.errors.tooManyAttempts };
+  }
+
   const { rows } = await q("SELECT id, password_hash FROM users WHERE email = $1", [email]);
   const user = rows[0];
   if (!user || !verifyPassword(password, user.password_hash)) {
@@ -150,87 +169,115 @@ export async function createOrder(prev, formData) {
     return { error: t.errors.nameWaRequired };
   }
 
-  const { rows } = await q("SELECT * FROM accounts WHERE id = $1 AND status = 'ready'", [accountId]);
-  const account = rows[0];
+  // Reservasi stok atomik: hanya satu order yang bisa mengunci akun 'ready'.
+  // Kalau validasi berikutnya gagal, reservasi dilepas kembali ke 'ready'.
+  const { rows: claimed } = await q(
+    `UPDATE accounts SET status = 'rented' WHERE id = $1 AND status = 'ready' RETURNING *`,
+    [accountId]
+  );
+  const account = claimed[0];
   if (!account) {
     return { error: t.errors.accountGone };
   }
-
-  // Mata uang: IDR (lokal) atau USD (luar negeri, bayar crypto)
-  const currency = String(formData.get("currency") || "IDR").toUpperCase() === "USD" ? "USD" : "IDR";
-
-  let hours, total, packageLabel = null;
-  let packageCommissionRate = 0;
-  let packageCommissionRateUsd = 0;
-
-  if (packageId > 0) {
-    // Paket: harga & durasi selalu diambil dari database, jangan percaya client
-    const { rows: pkgs } = await q("SELECT * FROM packages WHERE id = $1", [packageId]);
-    const pkg = pkgs[0];
-    if (!pkg) {
-      return { error: t.errors.pkgNotFound };
-    }
-    hours = pkg.duration_hours;
-    packageLabel = pkg.label;
-    packageCommissionRate = pkg.commission_rate || 0;
-    packageCommissionRateUsd = pkg.commission_rate_usd || 0;
-    if (currency === "USD") {
-      total = pkg.price_usd;
-      if (!total) return { error: t.errors.noUsdPrice };
-    } else {
-      total = pkg.price;
-    }
-  } else {
-    hours = Math.max(1, Math.min(72, Number(formData.get("hours")) || 1));
-    if (currency === "USD") {
-      const usdRate = await getUsdRate();
-      total = Math.max(1, Math.round(account.price_per_hour / usdRate)) * hours;
-    } else {
-      total = account.price_per_hour * hours;
-    }
-  }
-
-  // Kupon marketer (opsional): bonus masa aktif, harga tetap
-  const coupon = String(formData.get("coupon") || "").trim().toUpperCase();
-  let marketerId = null;
-  let couponCode = null;
-  let bonusHours = 0;
-  let commission = 0;
-
-  if (coupon) {
-    const { rows: mk } = await q(
-      `SELECT c.marketer_id
-       FROM coupons c JOIN marketers m ON m.id = c.marketer_id
-       WHERE upper(c.code) = $1 AND c.active AND m.active`,
-      [coupon]
+  const releaseClaim = () =>
+    q(
+      "UPDATE accounts SET status = 'ready' WHERE id = $1 AND status = 'rented'",
+      [accountId]
     );
-    if (!mk[0]) {
-      return { error: t.errors.couponInvalid };
-    }
-    marketerId = mk[0].marketer_id;
-    couponCode = coupon;
-    bonusHours = (await getVoucherBonusDays()) * 24;
-    // Komisi marketer: paket pakai rate paket, per jam pakai rate global.
-    // Mata uang berbeda pakai rate berbeda.
-    if (currency === "USD") {
-      commission = packageId > 0
-        ? Math.round((total * packageCommissionRateUsd) / 100)
-        : Math.round((total * (await getCommissionRateUsd())) / 100);
+
+  try {
+    // Mata uang: IDR (lokal) atau USD (luar negeri, bayar crypto)
+    const currency =
+      String(formData.get("currency") || "IDR").toUpperCase() === "USD"
+        ? "USD"
+        : "IDR";
+
+    let hours, total, packageLabel = null;
+    let packageCommissionRate = 0;
+    let packageCommissionRateUsd = 0;
+
+    if (packageId > 0) {
+      // Paket: harga & durasi selalu diambil dari database, jangan percaya client
+      const { rows: pkgs } = await q("SELECT * FROM packages WHERE id = $1", [packageId]);
+      const pkg = pkgs[0];
+      if (!pkg) {
+        await releaseClaim();
+        return { error: t.errors.pkgNotFound };
+      }
+      hours = pkg.duration_hours;
+      packageLabel = pkg.label;
+      packageCommissionRate = pkg.commission_rate || 0;
+      packageCommissionRateUsd = pkg.commission_rate_usd || 0;
+      if (currency === "USD") {
+        total = pkg.price_usd;
+        if (!total) {
+          await releaseClaim();
+          return { error: t.errors.noUsdPrice };
+        }
+      } else {
+        total = pkg.price;
+      }
     } else {
-      commission = packageId > 0
-        ? Math.round((total * packageCommissionRate) / 100)
-        : Math.round((total * (await getCommissionRate())) / 100);
+      hours = Math.max(1, Math.min(72, Number(formData.get("hours")) || 1));
+      if (currency === "USD") {
+        const usdRate = await getUsdRate();
+        total = Math.max(1, Math.round(account.price_per_hour / usdRate)) * hours;
+      } else {
+        total = account.price_per_hour * hours;
+      }
     }
+
+    // Kupon marketer (opsional): bonus masa aktif, harga tetap
+    const coupon = String(formData.get("coupon") || "").trim().toUpperCase();
+    let marketerId = null;
+    let couponCode = null;
+    let bonusHours = 0;
+    let commission = 0;
+
+    if (coupon) {
+      const { rows: mk } = await q(
+        `SELECT c.marketer_id
+         FROM coupons c JOIN marketers m ON m.id = c.marketer_id
+         WHERE upper(c.code) = $1 AND c.active AND m.active`,
+        [coupon]
+      );
+      if (!mk[0]) {
+        await releaseClaim();
+        return { error: t.errors.couponInvalid };
+      }
+      marketerId = mk[0].marketer_id;
+      couponCode = coupon;
+      bonusHours = (await getVoucherBonusDays()) * 24;
+      // Komisi marketer: paket pakai rate paket, per jam pakai rate global.
+      // Mata uang berbeda pakai rate berbeda.
+      if (currency === "USD") {
+        commission = packageId > 0
+          ? Math.round((total * packageCommissionRateUsd) / 100)
+          : Math.round((total * (await getCommissionRateUsd())) / 100);
+      } else {
+        commission = packageId > 0
+          ? Math.round((total * packageCommissionRate) / 100)
+          : Math.round((total * (await getCommissionRate())) / 100);
+      }
+    }
+
+    // 12 byte acak = 24 karakter hex, praktis mustahil ditebak
+    const code = "RZ-" + crypto.randomBytes(12).toString("hex").toUpperCase();
+
+    const userId = await getUserId();
+    await q(
+      `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours, commission, currency)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours, commission, currency]
+    );
+
+    // Hanya pembuat order (browser ini) yang bisa melihat detail + kredensial
+    await grantOrderAccess(code);
+  } catch (err) {
+    // Gagal insert → lepas reservasi supaya stok tidak menggantung
+    await releaseClaim().catch(() => {});
+    throw err;
   }
-
-  const code = "RZ-" + crypto.randomBytes(3).toString("hex").toUpperCase();
-
-  const userId = await getUserId();
-  await q(
-    `INSERT INTO orders (code, account_id, user_id, account_title, buyer_name, buyer_wa, hours, total, package_label, marketer_id, coupon_code, bonus_hours, commission, currency)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-    [code, accountId, userId, account.title, name, wa, hours, total, packageLabel, marketerId, couponCode, bonusHours, commission, currency]
-  );
 
   redirect(`/order/${code}`);
 }
@@ -252,6 +299,7 @@ export async function bayarCrypto(prev, formData) {
   const { rows } = await q("SELECT * FROM orders WHERE code = $1", [code]);
   const order = rows[0];
   if (!order) redirect("/");
+  if (!(await canViewOrder(order))) redirect("/");
   if (order.status !== "pending") redirect(`/order/${code}`);
 
   // Pakai lagi invoice lama kalau masih hidup, supaya tidak menumpuk invoice
@@ -578,6 +626,11 @@ export async function loginMarketer(prev, formData) {
 
   if (!email || !password) {
     return { error: t.errors.loginRequired };
+  }
+
+  const ip = await clientIp(null);
+  if (!rateLimit(`marketer-login:${ip}`, 10, 15 * 60 * 1000)) {
+    return { error: t.errors.tooManyAttempts };
   }
 
   const { rows } = await q(

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { q } from "@/lib/db";
 import { rp, money, tanggal, sisaSewa, sisaSewaText } from "@/lib/format";
 import { tgLink } from "@/lib/site";
@@ -7,6 +7,7 @@ import { pakasirPayUrl } from "@/lib/pakasir";
 import { oxapayEnabled } from "@/lib/oxapay";
 import { getDict, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/dict";
+import { canViewOrder } from "@/lib/orderAccess";
 import StatusBadge from "@/components/StatusBadge";
 import CopyField from "@/components/CopyField";
 import CryptoPayButton from "@/components/CryptoPayButton";
@@ -26,6 +27,14 @@ export default async function OrderPage({ params }) {
   const order = rows[0];
   if (!order) notFound();
 
+  // Admin, pemilik akun terdaftar, atau pembuat order (cookie akses).
+  // Tanpa ini, siapa pun yang punya kode bisa melihat kredensial akun.
+  if (!(await canViewOrder(order))) {
+    // Tampilkan halaman "order ditemukan tapi tidak ada akses",
+    // bukan 404, agar pembeli yang buka di device lain tahu harus login.
+    return <AccessDenied code={order.code} t={t} />;
+  }
+
   const isUsd = order.currency === "USD";
 
   const baseDuration = order.package_label
@@ -36,6 +45,17 @@ export default async function OrderPage({ params }) {
     bonusDays > 0
       ? baseDuration + fill(t.order.bonusConcat, { days: bonusDays, code: order.coupon_code })
       : baseDuration;
+
+  // Kredensial hanya tampil saat sewa aktif. Setelah masa sewa habis
+  // (atau order selesai/dibatalkan), email & password disembunyikan.
+  const rentalActive =
+    order.status === "paid" &&
+    (() => {
+      const sisa = sisaSewa(order);
+      return sisa && !sisa.habis;
+    })();
+  const showCreds = rentalActive;
+  const credsHidden = order.status === "paid" && !rentalActive;
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-14">
@@ -152,10 +172,16 @@ export default async function OrderPage({ params }) {
               {fill(t.order.paidBonus, { code: order.coupon_code, days: bonusDays })}
             </p>
           )}
-          <div className="space-y-3">
-            <CopyField label={t.order.emailAcc} value={order.email || t.order.contactAdmin} copyLabel={t.common.copy} copiedLabel={t.common.copied} />
-            <CopyField label={t.order.password} value={order.account_password || t.order.contactAdmin} copyLabel={t.common.copy} copiedLabel={t.common.copied} />
-          </div>
+          {credsHidden ? (
+            <p className="text-sm font-semibold text-warn bg-warn/10 border border-warn/40 rounded-md px-4 py-3">
+              {t.order.credsLocked}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <CopyField label={t.order.emailAcc} value={order.email || t.order.contactAdmin} copyLabel={t.common.copy} copiedLabel={t.common.copied} />
+              <CopyField label={t.order.password} value={order.account_password || t.order.contactAdmin} copyLabel={t.common.copy} copiedLabel={t.common.copied} />
+            </div>
+          )}
           <p className="text-sm text-soft mt-4">
             {t.order.loginIssue}{" "}
             <a href={tgLink(fill(t.order.waLogin, { code: order.code }))} className="underline underline-offset-2 font-semibold text-accent hover:text-accent2">
@@ -198,6 +224,33 @@ export default async function OrderPage({ params }) {
           </a>
         </div>
       )}
+    </div>
+  );
+}
+
+// Ditampilkan kalau order ada tapi viewer tidak punya akses
+function AccessDenied({ code, t }) {
+  return (
+    <div className="max-w-md mx-auto px-5 py-20 text-center">
+      <h1 className="font-display font-extrabold text-2xl text-text mb-3">
+        {t.order.accessTitle}
+      </h1>
+      <p className="text-soft mb-2">{t.order.accessDesc}</p>
+      <p className="text-xs text-faint mb-8">{fill(t.order.accessCode, { code })}</p>
+      <div className="flex flex-wrap justify-center gap-3">
+        <Link
+          href="/masuk"
+          className="inline-flex font-bold px-6 py-3 rounded-md bg-accent text-onaccent hover:bg-accent2"
+        >
+          {t.order.accessLogin}
+        </Link>
+        <a
+          href={tgLink(fill(t.order.waIssue, { code }))}
+          className="inline-flex font-bold px-6 py-3 rounded-md border border-line text-text hover:bg-surface2"
+        >
+          {t.order.chatAdmin}
+        </a>
+      </div>
     </div>
   );
 }

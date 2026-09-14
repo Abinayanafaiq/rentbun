@@ -1,24 +1,25 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { USER_SECRET, safeEqual } from "@/lib/secrets";
 
-const KEY = process.env.USER_SECRET || "rentzo-user-secret";
-
-function hashPassword(password) {
+export function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
   const derived = crypto.scryptSync(password, salt, 64).toString("hex");
   return `${salt}:${derived}`;
 }
 
-function verifyPassword(password, stored) {
+export function verifyPassword(password, stored) {
   const [salt, hash] = String(stored || "").split(":");
   if (!salt || !hash) return false;
   const derived = crypto.scryptSync(password, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(derived, "hex"));
+  const a = Buffer.from(hash, "hex");
+  const b = Buffer.from(derived, "hex");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 export function userToken(userId) {
   return crypto
-    .createHmac("sha256", KEY)
+    .createHmac("sha256", USER_SECRET)
     .update(`rentzo-user-${userId}`)
     .digest("hex");
 }
@@ -52,7 +53,7 @@ function verifyUserToken(token) {
   const hmac = token.slice(0, dot);
   const userId = Number(token.slice(dot + 1));
   if (!userId) return null;
-  if (userToken(userId) !== hmac) return null;
+  if (!safeEqual(userToken(userId), hmac)) return null;
   return userId;
 }
 
@@ -63,5 +64,3 @@ export async function getCurrentUser() {
   const { rows } = await q("SELECT id, name, email, wa, created_at FROM users WHERE id = $1", [id]);
   return rows[0] || null;
 }
-
-export { hashPassword, verifyPassword };

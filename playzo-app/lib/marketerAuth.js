@@ -1,11 +1,10 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
-
-const KEY = process.env.MARKETER_SECRET || process.env.USER_SECRET || "rentzo-marketer-secret";
+import { MARKETER_SECRET, safeEqual } from "@/lib/secrets";
 
 export function marketerToken(marketerId) {
   return crypto
-    .createHmac("sha256", KEY)
+    .createHmac("sha256", MARKETER_SECRET)
     .update(`rentzo-marketer-${marketerId}`)
     .digest("hex");
 }
@@ -35,7 +34,8 @@ export async function getMarketerId() {
   if (dot === -1) return null;
   const hmac = token.slice(0, dot);
   const marketerId = Number(token.slice(dot + 1));
-  if (!marketerId || marketerToken(marketerId) !== hmac) return null;
+  if (!marketerId) return null;
+  if (!safeEqual(marketerToken(marketerId), hmac)) return null;
   return marketerId;
 }
 

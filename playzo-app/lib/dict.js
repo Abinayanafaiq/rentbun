@@ -211,6 +211,13 @@ export const dict = {
       remaining: "Sisa masa sewa",
       remainingEnded: "Masa sewa sudah berakhir",
       remainingUntil: "Berakhir {date}",
+      credsLocked:
+        "Masa sewa sudah berakhir, jadi data login disembunyikan lagi demi keamanan akun.",
+      accessTitle: "Akses terbatas",
+      accessDesc:
+        "Order ini hanya bisa dibuka dari perangkat tempat order dibuat, atau login dengan akun yang dipakai saat order.",
+      accessCode: "Kode order: {code}",
+      accessLogin: "Masuk ke akun",
     },
     profil: {
       hello: "Halo, {name}!",
@@ -393,6 +400,8 @@ export const dict = {
       reportDetail: "Ceritakan kronologi minimal 20 karakter agar laporanmu bisa diverifikasi.",
       reportType: "Jenis masalah tidak valid.",
       reportEvidence: "Link bukti harus diawali http:// atau https://.",
+      tooManyAttempts:
+        "Terlalu banyak percobaan login. Tunggu beberapa menit lalu coba lagi.",
     },
   },
 
@@ -601,6 +610,13 @@ export const dict = {
       remaining: "Time remaining",
       remainingEnded: "The rental period has ended",
       remainingUntil: "Ends {date}",
+      credsLocked:
+        "The rental period has ended, so the login details are hidden again to keep the account safe.",
+      accessTitle: "Restricted access",
+      accessDesc:
+        "This order can only be opened from the device it was created on, or by signing in with the account used at checkout.",
+      accessCode: "Order code: {code}",
+      accessLogin: "Sign in",
     },
     profil: {
       hello: "Hi, {name}!",
@@ -782,6 +798,8 @@ export const dict = {
       reportDetail: "Describe what happened in at least 20 characters so your report can be verified.",
       reportType: "Invalid problem type.",
       reportEvidence: "Evidence link must start with http:// or https://.",
+      tooManyAttempts:
+        "Too many login attempts. Wait a few minutes and try again.",
     },
   },
 };
