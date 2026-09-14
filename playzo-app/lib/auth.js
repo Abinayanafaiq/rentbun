@@ -1,14 +1,11 @@
-import crypto from "crypto";
-import { cookies } from "next/headers";
+import { ADMIN_SECRET, hmacToken, safeEqual } from "@/lib/secrets";
 
 export function adminToken() {
-  return crypto
-    .createHmac("sha256", process.env.ADMIN_SECRET || "dev-secret")
-    .update("rentzo-admin")
-    .digest("hex");
+  return hmacToken(ADMIN_SECRET, "rentzo-admin", 0);
 }
 
 export async function isAdmin() {
+  const { cookies } = await import("next/headers");
   const store = await cookies();
-  return store.get("pz_session")?.value === adminToken();
+  return safeEqual(store.get("pz_session")?.value, adminToken());
 }
